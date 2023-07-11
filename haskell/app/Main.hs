@@ -1,11 +1,12 @@
 module Main where
+
+import Controller.User
 import Database.PostgreSQL.Simple
 import LocalDB.ConnectionDB
-import Controller.User
 
-main :: IO()
+main :: IO ()
 main = do
   conn <- iniciandoDatabase
-  solicitarCadastro conn
+  menu conn
   close conn
-  putStrLn "BD criado"
+  putStrLn ""
