@@ -1,4 +1,5 @@
-:- dynamic usuario/2.
+:- module(usuarios, [solicitarCadastro/0, login/2, menu/0]).
+:- use_module("./Util.pl").
 
 menu :-
     writeln('Menu:'),
@@ -6,20 +7,20 @@ menu :-
     writeln('2. Cadastrar'),
     writeln('0. Sair'),
     writeln('Escolha uma opção:'),
-    read(Opcao),
+    get_input("", Opcao),
     escolherOpcao(Opcao).
 
-escolherOpcao(1) :-
+escolherOpcao("1") :-
     writeln('Digite o e-mail:'),
     read_string(user_input, "\n", "\r", _, Email),
     writeln('Digite a senha:'),
     read_string(user_input, "\n", "\r", _, Senha),
     login(Email, Senha).
 
-escolherOpcao(2) :-
+escolherOpcao("2") :-
     solicitarCadastro.
 
-escolherOpcao(0) :- writeln('Saindo...').
+escolherOpcao("0") :- writeln('Saindo...').
 
 escolherOpcao(_) :-
     writeln('Opção inválida. Por favor, escolha novamente.'),
@@ -36,7 +37,7 @@ solicitarCadastro :-
     read_string(user_input, "\n", "\r", _, Senha),
     (
         usuario(Email, _)
-        -> writeln('Usuário com e-mail já cadastrado. Por favor, forneça um e-mail diferente.'),
+        -> writeln('Usuário com e-mail já cadastrado. Por favor, tente novamente.'),
            solicitarCadastro
         ;  (
                string_length(Senha, Len),
@@ -54,9 +55,9 @@ login(Email, Senha) :-
     writeln('Bem-vindo!'),
     menu.
 
+usuario(Email, Senha) :-
+    
+
 login(_, _) :-
     writeln('E-mail ou senha incorretos.'),
     menu.
-
-% Exemplo de uso
-:- initialization(menu).

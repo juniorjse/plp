@@ -1,9 +1,6 @@
-:- use_module(library(readutil)).
-:- use_module(library(lists)).
-
-:- use_module(connectiondb).
-:- use_module(user).
-:- use_module(admin).
+:- module(main, [main/0]).
+:- use_module("./Controller/User").
+:- use_module("./LocalDB/ConnectionDB").
 
 main :-
     iniciandoDatabase(Connection),
