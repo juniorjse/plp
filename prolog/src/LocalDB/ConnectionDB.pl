@@ -1,5 +1,6 @@
 :- module(connectiondb, [
     iniciandoDatabase/1,
+    encerrandoDatabase/1,
     createUsuarios/1
 ]).
 
@@ -7,6 +8,9 @@
 
 iniciandoDatabase(Connection) :-
     odbc_connect('SWI-Prolog', Connection, []).
+
+encerrandoDatabase(Connection) :-
+    odbc_disconnect(Connection).
 
 createUsuarios(Connection) :-
     odbc_query(Connection,
@@ -17,4 +21,3 @@ createUsuarios(Connection) :-
             SENHA VARCHAR(100) NOT NULL,
             CONSTRAINT PK_USUARIO PRIMARY KEY(EMAIL)
         )", _).
-        
