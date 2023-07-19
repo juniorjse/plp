@@ -63,17 +63,34 @@ solicitarCadastro :-
     read_line_to_string(user_input, Sobrenome),
     writeln('Digite o seu e-mail:'),
     read_line_to_string(user_input, Email),
-    writeln('Digite a sua senha (tem que ter no mínimo 8 caracteres):'),
+    writeln('Digite a sua senha (tem que ter no mínimo 7 caracteres):'),
+    read_line_to_string(user_input, SenhaString),
     writeln(''),
-    read_line_to_string(user_input, Senha),
 
-    createUser(Email, Senha, Nome, Sobrenome, Confirmacao),
-    (Confirmacao =:= 1 ->
-        writeln('Usuário cadastrado com sucesso!'),
-        menu;
-        writeln('E-mail já existente, tente realizar o login ou utilizar um e-mail diferente.'),
-        menu
+    string_chars(SenhaString, Senha),
+    (
+        (Nome = "" ; Sobrenome = "" ; Email = "" ; Senha = []) ->
+            writeln('Nenhum campo (sobrenome, nome, email, senha) pode estar vazio. Por favor, tente novamente.'),
+            solicitarCadastro
+        ;
+        length(Senha, Length),
+        (
+            Length < 7 ->
+                writeln('A senha precisa ter no mínimo 7 caracteres. Por favor, tente novamente.'),
+                solicitarCadastro
+        ;
+            createUser(Email, Senha, Nome, Sobrenome, Confirmacao),
+            (
+                Confirmacao =:= 1 ->
+                    writeln('Usuário cadastrado com sucesso!'),
+                    menu
+                ;
+                    writeln('Usuário com e-mail já cadastrado. Por favor, forneça um e-mail diferente.'),
+                    menu
+            )
+        )
     ).
+
 
 createUser(Email, Senha, Nome, Sobrenome, Confirmacao) :-
     connectiondb:iniciandoDatabase(Connection),
