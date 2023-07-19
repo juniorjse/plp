@@ -1,0 +1,28 @@
+# Arquivos gerados pelo Haskell Stack
+haskell/dist-newstyle/
+
+# Configurações do Visual Studio Code
+haskell/.vscode/
+
+# Outros exemplos de itens a serem ignorados
+# Arquivos compilados
+*.o
+*.hi
+
+# Arquivos executáveis
+*.exe
+*.out
+
+# Diretório de dependências do Python
+venv/
+
+# Arquivos de log
+*.log
+
+# Arquivos de chaves privadas ou segredos
+secrets.key
+secrets.yml
+
+# Arquivos temporários
+*.tmp
+*.swp
