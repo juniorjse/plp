@@ -3,6 +3,8 @@ module Controller.User where
 import Database.PostgreSQL.Simple
 import System.IO
 import Control.Exception
+import Control.Exception (catch, SomeException)
+import Data.Maybe (listToMaybe)
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -11,6 +13,7 @@ instance Exception UsuarioExistenteException
 
 menu :: Connection -> IO ()
 menu conn = do
+    putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Logar"
     putStrLn "2. Cadastrar"
@@ -18,6 +21,8 @@ menu conn = do
     putStrLn "Escolha uma opção:"
 
     opcao <- getLine
+
+    putStrLn ""
 
     case opcao of
         "1" -> do
@@ -67,23 +72,25 @@ solicitarCadastro conn = do
                         putStrLn "Cadastro realizado com sucesso."
                         menu conn
 
-            
-
 login :: Connection -> String -> String -> IO ()
 login conn email senha = do
     usuario <- buscarUsuarioPorEmailSenha conn email senha
+    putStrLn ""
+
     case usuario of
         Just (nome, sobrenome) -> do
             putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
             -- Realizar as ações após o login
         Nothing -> do
             putStrLn "E-mail ou senha incorretos."
-            menu conn
+            menu conn `catch` \ex -> do
+                putStrLn "Erro ao retornar ao menu: "
+                print (ex :: SomeException)
 
 buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
 buscarUsuarioPorEmailSenha conn email senha = do
-    [user] <- query conn "SELECT nome, sobrenome FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
-    return user
+    users <- query conn "SELECT nome, sobrenome FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
+    return $ listToMaybe users
 
 usuarioComEmailCadastrado :: Connection -> String -> IO Bool
 usuarioComEmailCadastrado conn email = do
