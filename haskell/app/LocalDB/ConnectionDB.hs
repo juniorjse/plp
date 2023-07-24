@@ -17,11 +17,12 @@ connectionMyDB = connect localDB
 createUsuarios :: Connection -> IO()
 createUsuarios conn = do
     execute_ conn "CREATE TABLE IF NOT EXISTS USUARIOS (\
-                    \NOME VARCHAR(100) NOT NULL,\
-                    \SOBRENOME VARCHAR(100) NOT NULL,\
-                    \EMAIL VARCHAR(100) NOT NULL,\
-                    \SENHA VARCHAR(100) NOT NULL,\
-                    \CONSTRAINT PK_USUARIO PRIMARY KEY(EMAIL));"
+                \ID SERIAL PRIMARY KEY,\
+                \NOME VARCHAR(100) NOT NULL,\
+                \SOBRENOME VARCHAR(100) NOT NULL,\
+                \EMAIL VARCHAR(100) NOT NULL,\
+                \SENHA VARCHAR(100) NOT NULL,\
+                \CONSTRAINT UNQ_USUARIO_EMAIL UNIQUE (EMAIL));"
     return ()
 
 iniciandoDatabase :: IO Connection
