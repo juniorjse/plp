@@ -18,7 +18,7 @@ menu conn = do
     putStrLn "1. Logar"
     putStrLn "2. Cadastrar"
     putStrLn "0. Sair"
-    putStrLn "Escolha uma opção:"
+    putStrLn "Escolha uma opcao:"
 
     opcao <- getLine
 
@@ -48,11 +48,17 @@ solicitarCadastro conn = do
     email <- getLine
     putStrLn "Digite a senha (mínimo de 7 caracteres):"
     senha <- getLine
+    putStrLn "Digite a senha novamente:"
+    confirmaSenha <- getLine
 
     if null nome || null sobrenome || null email || null senha
         then do
             putStrLn "Campos não podem ser nulos. Por favor, preencha todos os campos."
             solicitarCadastro conn
+        else if senha /= confirmaSenha
+            then do
+                putStrLn "Senhas diferentes. Tente novamente."
+                solicitarCadastro conn
         else if length senha < 7
             then do
                 putStrLn "A senha deve ter no mínimo 7 caracteres."
