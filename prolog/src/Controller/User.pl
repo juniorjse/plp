@@ -64,13 +64,19 @@ solicitarCadastro :-
     writeln('Digite o seu e-mail:'),
     read_line_to_string(user_input, Email),
     writeln('Digite a sua senha (tem que ter no mínimo 7 caracteres):'),
-    read_line_to_string(user_input, SenhaString),
+    read_line_to_string(user_input, SenhaString),    
+    writeln('Digite a senha novamente:'),
+    read_line_to_string(user_input, Senha2),
     writeln(''),
 
     string_chars(SenhaString, Senha),
     (
         (Nome = "" ; Sobrenome = "" ; Email = "" ; Senha = []) ->
             writeln('Nenhum campo (sobrenome, nome, email, senha) pode estar vazio. Por favor, tente novamente.'),
+            solicitarCadastro
+        ;
+        (SenhaString \== Senha2) ->
+            writeln('As senhas são diferentes. Por favor, tente novamente.'),
             solicitarCadastro
         ;
         length(Senha, Length),
