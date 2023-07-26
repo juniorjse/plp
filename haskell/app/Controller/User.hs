@@ -18,7 +18,7 @@ menu conn = do
     putStrLn "1. Logar"
     putStrLn "2. Cadastrar"
     putStrLn "0. Sair"
-    putStrLn "Escolha uma opcao:"
+    putStrLn "Escolha uma opção:"
 
     opcao <- getLine
 
