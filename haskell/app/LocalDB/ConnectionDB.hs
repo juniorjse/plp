@@ -36,6 +36,7 @@ createCarros conn = do
                 \ano INTEGER NOT NULL,\
                 \placa VARCHAR(20) NOT NULL,\
                 \categoria VARCHAR(100) NOT NULL,\
+                \status VARCHAR(1) NOT NULL,\
                 \quilometragem DOUBLE PRECISION NOT NULL);"
   return ()
 
