@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Controller.User where
+import System.IO.Unsafe
+import Data.IORef
 import Database.PostgreSQL.Simple
 import System.IO
 import Control.Exception
@@ -8,6 +10,12 @@ import Data.Maybe (listToMaybe)
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
+
+type UserID = Integer
+
+userIdRef :: IORef (Maybe UserID)
+userIdRef = unsafePerformIO (newIORef Nothing)
+{-# NOINLINE userIdRef #-}
 
 instance Exception UsuarioExistenteException
 
@@ -37,6 +45,32 @@ menu conn = do
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
             menu conn
+
+menuCliente :: Connection -> IO ()
+menuCliente conn = do
+
+    putStrLn ""
+    putStrLn "Menu:"
+    putStrLn "1. Listar carros"
+    putStrLn "2. Realizar aluguel"
+    putStrLn "0. Sair"
+    putStrLn "Escolha uma opção:"
+
+    opcao <- getLine
+
+    putStrLn ""
+
+    case opcao of
+        "1" -> do
+            putStrLn "Opção não implementada"
+            menuCliente conn
+        "2" -> do
+            putStrLn "Opção não implementada"
+            menuCliente conn
+        "0" -> return ()
+        _ -> do
+            putStrLn "Opção inválida. Por favor, escolha novamente."
+            menuCliente conn
 
 solicitarCadastro :: Connection -> IO ()
 solicitarCadastro conn = do
@@ -86,12 +120,21 @@ login conn email senha = do
     case usuario of
         Just (nome, sobrenome) -> do
             putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
-            -- Realizar as ações após o login
+            setUserID conn email
+            userId <- readIORef userIdRef
+
+            case userId of
+                Just uid -> putStrLn $ "Seu ID de usuário é: " ++ show uid
+            menuCliente conn
         Nothing -> do
             putStrLn "E-mail ou senha incorretos."
-            menu conn `catch` \ex -> do
-                putStrLn "Erro ao retornar ao menu: "
-                print (ex :: SomeException)
+            menu conn
+
+setUserID :: Connection -> String -> IO ()
+setUserID conn email = do
+    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
+    writeIORef userIdRef (Just (userId :: Integer))
+            
 
 buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
 buscarUsuarioPorEmailSenha conn email senha = do

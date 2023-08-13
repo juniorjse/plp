@@ -37,7 +37,9 @@ createCarros conn = do
                 \placa VARCHAR(20) NOT NULL,\
                 \categoria VARCHAR(100) NOT NULL,\
                 \status VARCHAR(1) NOT NULL,\
-                \quilometragem DOUBLE PRECISION NOT NULL);"
+                \quilometragem DOUBLE PRECISION NOT NULL,\
+                \diaria_carro float NOT NULL,\
+                \descricao_carro text NOT NULL);"
   return ()
 
 createAlugueis :: Connection -> IO ()
