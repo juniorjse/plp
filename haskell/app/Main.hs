@@ -9,4 +9,4 @@ main = do
   conn <- iniciandoDatabase
   menu conn
   close conn
-  putStrLn "teste"
+  putStrLn ""
