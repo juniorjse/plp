@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Controller.User where
+import Data.Maybe (fromJust)
 import System.IO.Unsafe
 import Data.IORef
 import Database.PostgreSQL.Simple
@@ -18,59 +19,6 @@ userIdRef = unsafePerformIO (newIORef Nothing)
 {-# NOINLINE userIdRef #-}
 
 instance Exception UsuarioExistenteException
-
-menu :: Connection -> IO ()
-menu conn = do
-    putStrLn ""
-    putStrLn "Menu:"
-    putStrLn "1. Logar"
-    putStrLn "2. Cadastrar"
-    putStrLn "0. Sair"
-    putStrLn "Escolha uma opção:"
-
-    opcao <- getLine
-
-    putStrLn ""
-
-    case opcao of
-        "1" -> do
-            putStrLn "Digite o e-mail:"
-            email <- getLine
-            putStrLn "Digite a senha:"
-            senha <- getLine
-
-            login conn email senha
-        "2" -> solicitarCadastro conn
-        "0" -> return ()
-        _ -> do
-            putStrLn "Opção inválida. Por favor, escolha novamente."
-            menu conn
-
-menuCliente :: Connection -> IO ()
-menuCliente conn = do
-
-    putStrLn ""
-    putStrLn "Menu:"
-    putStrLn "1. Listar carros"
-    putStrLn "2. Realizar aluguel"
-    putStrLn "0. Sair"
-    putStrLn "Escolha uma opção:"
-
-    opcao <- getLine
-
-    putStrLn ""
-
-    case opcao of
-        "1" -> do
-            putStrLn "Opção não implementada"
-            menuCliente conn
-        "2" -> do
-            putStrLn "Opção não implementada"
-            menuCliente conn
-        "0" -> return ()
-        _ -> do
-            putStrLn "Opção inválida. Por favor, escolha novamente."
-            menuCliente conn
 
 solicitarCadastro :: Connection -> IO ()
 solicitarCadastro conn = do
@@ -110,31 +58,7 @@ solicitarCadastro conn = do
                         execute_ conn "COMMIT"
 
                         putStrLn "Cadastro realizado com sucesso."
-                        menu conn
-
-login :: Connection -> String -> String -> IO ()
-login conn email senha = do
-    usuario <- buscarUsuarioPorEmailSenha conn email senha
-    putStrLn ""
-
-    case usuario of
-        Just (nome, sobrenome) -> do
-            putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
-            setUserID conn email
-            userId <- readIORef userIdRef
-
-            case userId of
-                Just uid -> putStrLn $ "Seu ID de usuário é: " ++ show uid
-            menuCliente conn
-        Nothing -> do
-            putStrLn "E-mail ou senha incorretos."
-            menu conn
-
-setUserID :: Connection -> String -> IO ()
-setUserID conn email = do
-    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
-    writeIORef userIdRef (Just (userId :: Integer))
-            
+                        menu conn         
 
 buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
 buscarUsuarioPorEmailSenha conn email senha = do
@@ -145,3 +69,82 @@ usuarioComEmailCadastrado :: Connection -> String -> IO Bool
 usuarioComEmailCadastrado conn email = do
     [Only count] <- query conn "SELECT COUNT(*) FROM USUARIOS WHERE email = ?" (Only email)
     return (count /= (0 :: Int))
+
+menu :: Connection -> IO ()
+menu conn = do
+    putStrLn ""
+    putStrLn "Menu:"
+    putStrLn "1. Logar"
+    putStrLn "2. Cadastrar"
+    putStrLn "0. Sair"
+    putStrLn "Escolha uma opção:"
+
+    opcao <- getLine
+
+    putStrLn ""
+
+    case opcao of
+        "1" -> do
+            putStrLn "Digite o e-mail:"
+            email <- getLine
+            putStrLn "Digite a senha:"
+            senha <- getLine
+    
+            login conn email senha
+        "2" -> solicitarCadastro conn
+        "0" -> return ()
+        _ -> do
+            putStrLn "Opção inválida. Por favor, escolha novamente."
+            menu conn
+    
+menuCliente :: Connection -> UserID -> IO ()
+menuCliente conn userId = do
+    putStrLn ""
+    putStrLn "Menu:"
+    putStrLn "1. Listar carros"
+    putStrLn "2. Realizar aluguel"
+    putStrLn "0. Sair"
+    putStrLn "Escolha uma opção:"
+
+    opcao <- getLine
+
+    putStrLn ""
+
+    case opcao of
+        "1" -> do
+            putStrLn "Opção não implementada"
+            menuCliente conn userId
+        "2" -> do
+            realizarAluguel conn userId
+        "0" -> return ()
+        _ -> do
+            putStrLn "Opção inválida. Por favor, escolha novamente."
+            menuCliente conn userId
+
+login :: Connection -> String -> String -> IO ()
+login conn email senha = do
+    maybeUserTuple <- buscarUsuarioPorEmailSenha conn email senha
+    putStrLn ""
+
+    case maybeUserTuple of
+        Just (nome, sobrenome) -> do
+            putStrLn "Bem-vindo!"
+            putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
+            setUserID conn email
+            maybeUserId <- readIORef userIdRef
+            case maybeUserId of
+                Just userId -> menuCliente conn userId
+                Nothing -> putStrLn "UserID não encontrado."
+        Nothing -> do
+            putStrLn "E-mail ou senha incorretos."
+            menu conn
+            
+            
+setUserID :: Connection -> String -> IO ()
+setUserID conn email = do
+    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
+    writeIORef userIdRef (Just (userId :: Integer))
+
+realizarAluguel :: Connection -> UserID -> IO ()
+realizarAluguel conn userId = do
+    putStrLn $ "Realizando aluguel para o UserID: " ++ show userId
