@@ -7,6 +7,7 @@ import System.IO
 import Control.Exception
 import Control.Exception (catch, SomeException)
 import Data.Maybe (listToMaybe)
+import Controller.Car_register
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -53,6 +54,7 @@ menuCliente conn = do
     putStrLn "Menu:"
     putStrLn "1. Listar carros"
     putStrLn "2. Realizar aluguel"
+    putStrLn "3. Cadastrar carro"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -67,6 +69,8 @@ menuCliente conn = do
         "2" -> do
             putStrLn "Opção não implementada"
             menuCliente conn
+        "3" -> do
+            registrarCarro conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
@@ -120,6 +124,8 @@ login conn email senha = do
     case usuario of
         Just (nome, sobrenome) -> do
             putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
+            putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
+                
             setUserID conn email
             userId <- readIORef userIdRef
 
