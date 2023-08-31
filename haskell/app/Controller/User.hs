@@ -54,6 +54,7 @@ menuCliente conn userId = do
     putStrLn "Menu:"
     putStrLn "1. Listar carros"
     putStrLn "2. Realizar aluguel"
+    putStrLn "3. Cancelar aluguel"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -69,6 +70,7 @@ menuCliente conn userId = do
             putStrLn "ID do carro:"
             carroId <- getLine
             realizarAluguel conn userId carroId
+        "3" -> cancelarAluguel conn userId
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
@@ -175,3 +177,29 @@ realizarAluguel conn userId carroId = do
                     putStrLn "Opção inválida. Por favor, escolha novamente."
                     menuCliente conn userId
     
+
+cancelarAluguel :: Connection -> Integer -> IO ()
+cancelarAluguel conn userId = do
+    alugueis <- buscarAlugueisPorUsuario conn userId
+    putStrLn ""
+    putStrLn "Aluguéis do usuário:"
+    
+    case alugueis of
+        [] -> putStrLn "Nenhum aluguel encontrado para este usuário."
+        _ -> do
+            putStrLn $ "ID do Aluguel | ID do Carro | Valor Total"
+            putStrLn "--------------------------------------------"
+            mapM_ printAluguelInfo alugueis
+    
+    putStrLn ""
+    menuCliente conn userId
+
+buscarAlugueisPorUsuario :: Connection -> Integer -> IO [(Integer, Integer, Double)]
+buscarAlugueisPorUsuario conn userId = do
+    alugueis <- query conn "SELECT id_aluguel, id_carro, valor_total FROM Alugueis WHERE id_usuario = ? AND status_aluguel = 'ativo'" (Only userId)
+    return alugueis
+
+printAluguelInfo :: (Integer, Integer, Double) -> IO ()
+printAluguelInfo (idAluguel, idCarro, valorTotal) = do
+    putStrLn $ show idAluguel ++ "             |       " ++ show idCarro ++ "     |        " ++ show valorTotal
+                    
