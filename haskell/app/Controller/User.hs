@@ -7,6 +7,7 @@ import System.IO
 import Control.Exception
 import Control.Exception (catch, SomeException)
 import Data.Maybe (listToMaybe)
+import Controller.Ranking
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -53,6 +54,7 @@ menuCliente conn = do
     putStrLn "Menu:"
     putStrLn "1. Listar carros"
     putStrLn "2. Realizar aluguel"
+    putStrLn "3. Ranking de Carros Mais Alugados"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -67,6 +69,7 @@ menuCliente conn = do
         "2" -> do
             putStrLn "Opção não implementada"
             menuCliente conn
+        "3"-> mostrarRanking conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
