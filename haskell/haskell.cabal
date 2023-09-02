@@ -13,8 +13,8 @@ version:            0.1.0.0
 
 -- The license under which the package is released.
 -- license:
-author:             Junior
-maintainer:         69211250+juniorjse@users.noreply.github.com
+author:             leticiagc
+maintainer:         leticia.calixto@ccc.ufcg.edu.br
 
 -- A copyright notice.
 -- copyright:
@@ -29,7 +29,6 @@ executable haskell
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:      base ^>=4.16.2.0,
-                        postgresql-simple ^>=0.6.4
-    hs-source-dirs:     app
-    default-language:   Haskell2010
+    build-depends:    base ^>=4.16.4.0, postgresql-simple >=0.6.4, time >=1.9.3
+    hs-source-dirs:   app
+    default-language: Haskell2010
