@@ -9,6 +9,7 @@ import Control.Exception
 import Control.Exception (catch, SomeException)
 import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
+import Database.PostgreSQL.Simple.ToField (ToField (..))
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -190,9 +191,24 @@ cancelarAluguel conn userId = do
             putStrLn $ "ID do Aluguel | ID do Carro | Valor Total"
             putStrLn "--------------------------------------------"
             mapM_ printAluguelInfo alugueis
-    
-    putStrLn ""
-    menuCliente conn userId
+
+            putStrLn "Digite o ID do aluguel que deseja cancelar:"
+            aluguelIdStr <- getLine
+            let aluguelId = read aluguelIdStr :: Integer
+
+            -- Agora, vamos chamar a função verificarDuracaoAluguel para verificar se o aluguel pode ser cancelado.
+            duracao <- verificarDuracaoAluguel conn (fromInteger aluguelId)
+
+            -- Agora, com base no valor de duracao, decidimos se o aluguel pode ser cancelado ou não
+            if duracao == 0
+                then do
+                    putStrLn "Aluguel possível de ser cancelado."
+                    -- Coloque aqui o código para cancelar o aluguel, se desejado.
+                else do
+                    putStrLn "Aluguel não é possível ser cancelado, pois faz mais de um dia que o aluguel foi iniciado."
+
+            -- Retornar ao menu de cliente ou executar outras ações, se necessário
+            menuCliente conn userId
 
 buscarAlugueisPorUsuario :: Connection -> Integer -> IO [(Integer, Integer, Double)]
 buscarAlugueisPorUsuario conn userId = do
@@ -202,4 +218,9 @@ buscarAlugueisPorUsuario conn userId = do
 printAluguelInfo :: (Integer, Integer, Double) -> IO ()
 printAluguelInfo (idAluguel, idCarro, valorTotal) = do
     putStrLn $ show idAluguel ++ "             |       " ++ show idCarro ++ "     |        " ++ show valorTotal
+
+verificarDuracaoAluguel :: Connection -> Int -> IO Int
+verificarDuracaoAluguel conn aluguelId = do
+    [Only result] <- query conn "SELECT verificaDuracaoAluguel(?)" (Only aluguelId)
+    return result
                     
