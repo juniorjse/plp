@@ -58,7 +58,6 @@ menu conn = do
     
 menuCliente :: Connection -> UserID -> IO ()
 menuCliente conn userId = do
-    clearScreenOnly  
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Listar carros"
@@ -92,6 +91,7 @@ login conn email senha = do
 
     case maybeUserTuple of
         Just (nome, sobrenome) -> do
+            clearScreenOnly  
             putStrLn "Bem-vindo!"
             putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
             setUserID conn email
@@ -100,6 +100,7 @@ login conn email senha = do
                 Just userId -> menuCliente conn userId
                 Nothing -> putStrLn "UserID não encontrado."
         Nothing -> do
+            clearScreenOnly
             putStrLn "E-mail ou senha incorretos."
             menu conn
 
@@ -204,11 +205,11 @@ cancelarAluguel conn userId = do
             aluguelIdStr <- getLine
             let aluguelId = read aluguelIdStr :: Integer
 
-            -- Agora, vamos chamar a função verificarDuracaoAluguel para verificar se o aluguel pode ser cancelado.
-            duracao <- verificarDuracaoAluguel conn (fromInteger aluguelId)
+            -- Chama a função verificaTempoAluguel para verificar se o aluguel pode ser cancelado.
+            tempo <- verificaTempoAluguel conn (fromInteger aluguelId)
 
-            -- Agora, com base no valor de duracao, decidimos se o aluguel pode ser cancelado ou não
-            if duracao == 0
+            -- Agora, com base no valor de tempo, decidimos se o aluguel pode ser cancelado ou não
+            if tempo == 0
                 then do
                     putStrLn "Aluguel possível de ser cancelado."
                     -- Coloque aqui o código para cancelar o aluguel, se desejado.
@@ -227,8 +228,8 @@ printAluguelInfo :: (Integer, Integer, Double) -> IO ()
 printAluguelInfo (idAluguel, idCarro, valorTotal) = do
     putStrLn $ show idAluguel ++ "             |       " ++ show idCarro ++ "     |        " ++ show valorTotal
 
-verificarDuracaoAluguel :: Connection -> Int -> IO Int
-verificarDuracaoAluguel conn aluguelId = do
-    [Only result] <- query conn "SELECT verificaDuracaoAluguel(?)" (Only aluguelId)
+verificaTempoAluguel :: Connection -> Int -> IO Int
+verificaTempoAluguel conn aluguelId = do
+    [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
                     
