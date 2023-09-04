@@ -81,9 +81,7 @@ menuCliente conn userId = do
             carroId <- getLine
             realizarAluguel conn userId carroId
         "3" -> cancelarAluguel conn userId
-            putStrLn "Opção não implementada"
-            menuCliente conn
-        "4"-> mostrarRanking conn
+        "4" -> mostrarRanking conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
