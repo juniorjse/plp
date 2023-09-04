@@ -211,9 +211,11 @@ cancelarAluguel conn userId = do
             -- Agora, com base no valor de tempo, decidimos se o aluguel pode ser cancelado ou não
             if tempo == 0
                 then do
+                    clearScreenOnly
                     putStrLn "Aluguel possível de ser cancelado."
                     -- Coloque aqui o código para cancelar o aluguel, se desejado.
                 else do
+                    clearScreenOnly
                     putStrLn "Aluguel não é possível ser cancelado, pois faz mais de um dia que o aluguel foi iniciado."
 
             -- Retornar ao menu de cliente ou executar outras ações, se necessário
