@@ -27,5 +27,5 @@ ranking conn ((id, qtd):t) cont = do
 
 ordemRanking :: Connection -> IO [(Int, Int)]
 ordemRanking conn = do
-    rows <- query_ conn "SELECT id_carro, COUNT(*) as quantidade_alugueis FROM Alugueis GROUP BY id_carro ORDER BY quantidade_alugueis ASC;"
+    rows <- query_ conn "SELECT id_carro, COUNT(*) as quantidade_alugueis FROM Alugueis GROUP BY id_carro ORDER BY quantidade_alugueis DESC;"
     return [(id_carro, quantidade_alugueis) | (id_carro, quantidade_alugueis) <- rows]
