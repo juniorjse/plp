@@ -180,6 +180,7 @@ realizarAluguel conn userId carroId = do
             case confirma of
                 "1" -> do
                     execute conn "INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (?, ?, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day' * ?, ?, 'ativo')"(carroId, userId, dias_aluguel, valor_total)
+                    execute conn "UPDATE carros SET status = 'O' WHERE id_carro = ?" (Only carroId)
                     putStrLn "Aluguel realizado com sucesso!"
                     menuCliente conn userId
                 "2" -> menuCliente conn userId
@@ -213,10 +214,24 @@ cancelarAluguel conn userId = do
                 then do
                     clearScreenOnly
                     putStrLn "Aluguel possível de ser cancelado."
-                    -- Coloque aqui o código para cancelar o aluguel, se desejado.
+                    putStrLn ""
+                    putStrLn "Deseja confirmar o cancelamento desse aluguel?"
+                    putStrLn "Sim(digite 1), Não(digite 2)"
+                    confirma <- getLine
+                    case confirma of
+                        "1" -> do
+                            execute conn "UPDATE Alugueis SET status_aluguel = 'cancelado' WHERE id_aluguel = ?" (Only aluguelId)
+                            execute conn "UPDATE carros SET status = 'D' WHERE id_carro = (SELECT id_carro FROM Alugueis WHERE id_aluguel = ?)" (Only aluguelId)
+                            putStrLn "Aluguel cancelado com sucesso!"
+                            menuCliente conn userId
+                        "2" -> menuCliente conn userId
+                        _ -> do
+                            putStrLn "Opção inválida. Por favor, escolha novamente."
+                            menuCliente conn userId
                 else do
                     clearScreenOnly
                     putStrLn "Aluguel não é possível ser cancelado, pois faz mais de um dia que o aluguel foi iniciado."
+                    putStrLn ""
 
             -- Retornar ao menu de cliente ou executar outras ações, se necessário
             menuCliente conn userId
