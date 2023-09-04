@@ -72,8 +72,24 @@ menuCliente conn userId = do
 
     case opcao of
         "1" -> do
-            putStrLn "Opção não implementada"
+            clearScreenOnly
+            putStrLn "Opções de Categoria:"
+            putStrLn "1. Econômico"
+            putStrLn "2. Intermediário"
+            putStrLn "3. SUV"
+            putStrLn "4. Luxo"
+            putStrLn ""
+            putStrLn "Escolha a categoria de carro desejada (1/2/3/4): "
+            categoria <- getLine
+
+            case categoria of
+                "1" -> listarCarrosPorCategoria conn "Econômico"
+                "2" -> listarCarrosPorCategoria conn "Intermediário"
+                "3" -> listarCarrosPorCategoria conn "SUV"
+                "4" -> listarCarrosPorCategoria conn "Luxo"
+                _   -> putStrLn "Opção inválida. Por favor, escolha uma categoria válida."
             menuCliente conn userId
+
         "2" -> do
             putStrLn "ID do carro:"
             carroId <- getLine
@@ -187,7 +203,6 @@ realizarAluguel conn userId carroId = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, escolha novamente."
                     menuCliente conn userId
-    
 
 cancelarAluguel :: Connection -> Integer -> IO ()
 cancelarAluguel conn userId = do
@@ -249,4 +264,18 @@ verificaTempoAluguel :: Connection -> Int -> IO Int
 verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
-                    
+    
+listarCarrosPorCategoria :: Connection -> String -> IO ()
+listarCarrosPorCategoria conn categoria = do
+    putStrLn ""
+    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
+    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ?" [categoria]
+    
+    if null carros
+        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
+        else mapM_ printCarro carros
+
+printCarro :: (String, String, Int) -> IO ()
+printCarro (marca, modelo, ano) = do
+    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
+        
