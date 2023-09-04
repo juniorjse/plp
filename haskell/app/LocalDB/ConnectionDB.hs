@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module LocalDB.ConnectionDB where
-
+import Control.Monad (void)
 import Database.PostgreSQL.Simple
 
 localDB :: ConnectInfo
@@ -64,6 +64,25 @@ createLocadora conn = do
                 \endereco VARCHAR(200) NOT NULL,\
                 \contato VARCHAR(100) NOT NULL);"
   return ()
+
+createVerificaTempoAluguel :: Connection -> IO ()
+createVerificaTempoAluguel conn = do
+    void $ execute_ conn $
+        "CREATE OR REPLACE FUNCTION verificaTempoAluguel(aluguel_id INT) \
+        \RETURNS INT AS $$ \
+        \DECLARE \
+        \    data_inicio_aluguel DATE; \
+        \    duracao INT; \
+        \BEGIN \
+        \    SELECT data_inicio INTO data_inicio_aluguel FROM alugueis WHERE id_aluguel = aluguel_id; \
+        \    duracao := (SELECT DATE_PART('day', NOW() - data_inicio_aluguel)::INT); \
+        \    IF duracao > 1 THEN \
+        \        RETURN 1; \
+        \    ELSE \
+        \        RETURN 0; \
+        \    END IF; \
+        \END; \
+        \$$ LANGUAGE plpgsql;"
 
 iniciandoDatabase :: IO Connection
 iniciandoDatabase = do
