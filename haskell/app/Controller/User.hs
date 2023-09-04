@@ -10,6 +10,7 @@ import Control.Exception (catch, SomeException)
 import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
+import System.Console.ANSI
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -21,6 +22,12 @@ userIdRef = unsafePerformIO (newIORef Nothing)
 {-# NOINLINE userIdRef #-}
 
 instance Exception UsuarioExistenteException
+
+clearScreenOnly :: IO ()
+clearScreenOnly = do
+    clearScreen
+    setCursorPosition 0 0
+    return ()
 
 menu :: Connection -> IO ()
 menu conn = do
@@ -51,6 +58,7 @@ menu conn = do
     
 menuCliente :: Connection -> UserID -> IO ()
 menuCliente conn userId = do
+    clearScreenOnly  
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Listar carros"
