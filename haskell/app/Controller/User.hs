@@ -269,7 +269,7 @@ listarCarrosPorCategoria :: Connection -> String -> IO ()
 listarCarrosPorCategoria conn categoria = do
     putStrLn ""
     putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
-    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ?" [categoria]
+    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
     
     if null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
