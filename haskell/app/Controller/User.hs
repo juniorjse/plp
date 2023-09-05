@@ -87,6 +87,12 @@ menuCliente conn userId = do
                 "2" -> listarCarrosPorCategoria conn "Intermediário"
                 "3" -> listarCarrosPorCategoria conn "SUV"
                 "4" -> listarCarrosPorCategoria conn "Luxo"
+                "5" -> listarCarrosPorCategoria conn "Minivan"
+                "6" -> listarCarrosPorCategoria conn "Sedan"
+                "7" -> listarCarrosPorCategoria conn "Conversível"
+                "8" -> listarCarrosPorCategoria conn "Esportivo"
+                "9" -> listarCarrosPorCategoria conn "Pickup"
+                "10" -> listarCarrosPorCategoria conn "Elétrico"
                 _   -> putStrLn "Opção inválida. Por favor, escolha uma categoria válida."
             menuCliente conn userId
 
