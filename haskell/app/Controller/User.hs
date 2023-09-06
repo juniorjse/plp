@@ -11,6 +11,8 @@ import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import System.Console.ANSI
+import Controller.Locadora 
+import Controller.Mecanica 
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -112,14 +114,19 @@ login conn email senha = do
     putStrLn ""
 
     case maybeUserTuple of
-        Just (nome, sobrenome) -> do
+        Just (nome, sobrenome, tipo) -> do
             clearScreenOnly  
             putStrLn "Bem-vindo!"
             putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
             setUserID conn email
             maybeUserId <- readIORef userIdRef
             case maybeUserId of
-                Just userId -> menuCliente conn userId
+                Just userId ->
+                    if tipo == "administrador"
+                        then menuLocadora conn
+                        else if tipo == "mecanico"
+                            then menuMecanica conn
+                            else menuCliente conn userId
                 Nothing -> putStrLn "UserID não encontrado."
         Nothing -> do
             clearScreenOnly
@@ -166,9 +173,9 @@ solicitarCadastro conn = do
                         putStrLn "Cadastro realizado com sucesso."
                         menu conn         
 
-buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
+buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String, String))
 buscarUsuarioPorEmailSenha conn email senha = do
-    users <- query conn "SELECT nome, sobrenome FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
+    users <- query conn "SELECT nome, sobrenome, tipo FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
     return $ listToMaybe users
 
 usuarioComEmailCadastrado :: Connection -> String -> IO Bool
