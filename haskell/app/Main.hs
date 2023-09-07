@@ -12,3 +12,4 @@ main = do
   menu conn
   close conn
   putStrLn "Até a próxima!!"
+    

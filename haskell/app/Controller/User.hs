@@ -11,7 +11,7 @@ import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import System.Console.ANSI
-import Controller.Ranking
+import Controller.Carros
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
