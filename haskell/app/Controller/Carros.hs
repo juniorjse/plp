@@ -86,6 +86,7 @@ mostrarRanking :: Connection -> IO ()
 mostrarRanking conn = do
     ordem <- ordemRanking conn
     putStrLn "------------------------Carros mais alugados------------------------"
+    putStrLn "     MARCA          MODELO   ANO     PLACA      ALUGUEIS "
     ranking conn ordem 1
 
 ranking :: Connection -> [(Int, Int)] -> Int -> IO ()
