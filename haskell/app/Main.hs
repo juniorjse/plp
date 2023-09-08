@@ -11,5 +11,4 @@ main = do
   clearScreenOnly
   menu conn
   close conn
-  putStrLn "Até a próxima!!"
-            
+  putStrLn "Até a próxima !"

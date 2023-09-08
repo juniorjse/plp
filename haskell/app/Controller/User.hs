@@ -11,6 +11,8 @@ import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import System.Console.ANSI
+import Controller.Locadora 
+import Controller.Mecanica 
 import Controller.Carros
 
 data UsuarioExistenteException = UsuarioExistenteException
@@ -74,8 +76,30 @@ menuCliente conn userId = do
 
     case opcao of
         "1" -> do
-            putStrLn "Opção não implementada"
+            clearScreenOnly
+            putStrLn "Opções de Categoria:"
+            putStrLn "1. Econômico"
+            putStrLn "2. Intermediário"
+            putStrLn "3. SUV"
+            putStrLn "4. Luxo"
+            putStrLn ""
+            putStrLn "Escolha a categoria de carro desejada (1/2/3/4): "
+            categoria <- getLine
+
+            case categoria of
+                "1" -> listarCarrosPorCategoria conn "Econômico"
+                "2" -> listarCarrosPorCategoria conn "Intermediário"
+                "3" -> listarCarrosPorCategoria conn "SUV"
+                "4" -> listarCarrosPorCategoria conn "Luxo"
+                "5" -> listarCarrosPorCategoria conn "Minivan"
+                "6" -> listarCarrosPorCategoria conn "Sedan"
+                "7" -> listarCarrosPorCategoria conn "Conversível"
+                "8" -> listarCarrosPorCategoria conn "Esportivo"
+                "9" -> listarCarrosPorCategoria conn "Pickup"
+                "10" -> listarCarrosPorCategoria conn "Elétrico"
+                _   -> putStrLn "Opção inválida. Por favor, escolha uma categoria válida."
             menuCliente conn userId
+
         "2" -> do
             putStrLn "ID do carro:"
             carroId <- getLine
@@ -93,14 +117,19 @@ login conn email senha = do
     putStrLn ""
 
     case maybeUserTuple of
-        Just (nome, sobrenome) -> do
+        Just (nome, sobrenome, tipo) -> do
             clearScreenOnly  
             putStrLn "Bem-vindo!"
             putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
             setUserID conn email
             maybeUserId <- readIORef userIdRef
             case maybeUserId of
-                Just userId -> menuCliente conn userId
+                Just userId ->
+                    if tipo == "administrador"
+                        then menuLocadora conn
+                        else if tipo == "mecanico"
+                            then menuMecanica conn
+                            else menuCliente conn userId
                 Nothing -> putStrLn "UserID não encontrado."
         Nothing -> do
             clearScreenOnly
@@ -147,9 +176,9 @@ solicitarCadastro conn = do
                         putStrLn "Cadastro realizado com sucesso."
                         menu conn         
 
-buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
+buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String, String))
 buscarUsuarioPorEmailSenha conn email senha = do
-    users <- query conn "SELECT nome, sobrenome FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
+    users <- query conn "SELECT nome, sobrenome, tipo FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
     return $ listToMaybe users
 
 usuarioComEmailCadastrado :: Connection -> String -> IO Bool
@@ -190,7 +219,6 @@ realizarAluguel conn userId carroId = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, escolha novamente."
                     menuCliente conn userId
-    
 
 cancelarAluguel :: Connection -> Integer -> IO ()
 cancelarAluguel conn userId = do
@@ -252,4 +280,18 @@ verificaTempoAluguel :: Connection -> Int -> IO Int
 verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
-                    
+    
+listarCarrosPorCategoria :: Connection -> String -> IO ()
+listarCarrosPorCategoria conn categoria = do
+    putStrLn ""
+    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
+    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
+    
+    if null carros
+        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
+        else mapM_ printCarro carros
+
+printCarro :: (String, String, Int) -> IO ()
+printCarro (marca, modelo, ano) = do
+    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
+        
