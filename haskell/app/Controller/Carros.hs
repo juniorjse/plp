@@ -3,6 +3,8 @@ module Controller.Carros where
 import Database.PostgreSQL.Simple
 import System.IO
 import Data.Maybe (listToMaybe)
+import qualified Data.Text as T
+
 
 registrarCarro :: Connection -> IO ()
 registrarCarro conn = do
@@ -83,17 +85,18 @@ carroJaCadastrado conn placa = do
 mostrarRanking :: Connection -> IO ()
 mostrarRanking conn = do
     ordem <- ordemRanking conn
-    putStrLn "------------------------------Carros mais alugados------------------------------"
+    putStrLn "------------------------Carros mais alugados------------------------"
     ranking conn ordem 1
 
 ranking :: Connection -> [(Int, Int)] -> Int -> IO ()
-ranking _ [] _ = putStrLn "----------------------------------------------------------------------------------------------------"
+ranking _ [] _ = putStrLn "--------------------------------------------------------------------"
 ranking conn ((id, qtd):t) cont = do
     [Only marca]    <- query conn "SELECT marca FROM carros WHERE id_carro = ?"              (Only id)
     [Only modelo]   <- query conn "SELECT modelo FROM carros WHERE id_carro = ?"             (Only id)
     [Only ano]      <- query conn "SELECT CAST(ano AS TEXT) FROM carros WHERE id_carro = ?"  (Only id)
     [Only placa]    <- query conn "SELECT placa FROM carros WHERE id_carro = ?"              (Only id)
-    putStrLn (show cont ++ "º: " ++ marca ++ ", " ++ modelo ++ ", " ++ ano ++ ", " ++ placa ++ "." ++ "\t Alugado " ++ show qtd ++ " vezes.")
+    let texto = T.pack(show cont ++ "º: " ++ T.unpack(T.justifyLeft 15 ' ' (T.pack marca)) ++ T.unpack(T.justifyLeft 10 ' ' (T.pack modelo)) ++ ano ++ "    " ++ placa ++ "    ")
+    putStrLn (T.unpack(T.justifyLeft 45 ' ' texto) ++ "Alugado " ++ show qtd ++ " vezes.")
     ranking conn t (cont + 1)
 
 ordemRanking :: Connection -> IO [(Int, Int)]
