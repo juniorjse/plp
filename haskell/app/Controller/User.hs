@@ -13,7 +13,8 @@ import Database.PostgreSQL.Simple.ToField (ToField (..))
 import System.Console.ANSI
 import Controller.Locadora 
 import Controller.Mecanica 
-import Controller.Carros
+import Data.Text as T
+import qualified Database.PostgreSQL.LibPQ as Data
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -105,7 +106,7 @@ menuCliente conn userId = do
             carroId <- getLine
             realizarAluguel conn userId carroId
         "3" -> cancelarAluguel conn userId
-        "4" -> mostrarRanking conn
+        "4" -> mostrarRanking conn userId
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
@@ -149,7 +150,7 @@ solicitarCadastro conn = do
     putStrLn "Digite a senha novamente:"
     confirmaSenha <- getLine
 
-    if null nome || null sobrenome || null email || null senha
+    if Prelude.null nome || Prelude.null sobrenome || Prelude.null email || Prelude.null senha
         then do
             putStrLn "Campos não podem ser nulos. Por favor, preencha todos os campos."
             solicitarCadastro conn
@@ -157,7 +158,7 @@ solicitarCadastro conn = do
             then do
                 putStrLn "Senhas diferentes. Tente novamente."
                 solicitarCadastro conn
-        else if length senha < 7
+        else if Prelude.length senha < 7
             then do
                 putStrLn "A senha deve ter no mínimo 7 caracteres."
                 solicitarCadastro conn
@@ -287,7 +288,7 @@ listarCarrosPorCategoria conn categoria = do
     putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
     carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
     
-    if null carros
+    if Prelude.null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
         else mapM_ printCarro carros
 
@@ -295,3 +296,27 @@ printCarro :: (String, String, Int) -> IO ()
 printCarro (marca, modelo, ano) = do
     putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
         
+
+mostrarRanking :: Connection -> Integer -> IO ()
+mostrarRanking conn userId = do
+    ordem <- ordemRanking conn
+    putStrLn "------------------------Carros mais alugados------------------------"
+    putStrLn "     MARCA          MODELO   ANO     PLACA      ALUGUEIS "
+    ranking conn ordem 1
+    menuCliente conn userId
+
+ranking :: Connection -> [(Int, Int)] -> Int -> IO ()
+ranking _ [] _ = putStrLn "--------------------------------------------------------------------"
+ranking conn ((id, qtd):t) cont = do
+    [Only marca]    <- query conn "SELECT marca FROM carros WHERE id_carro = ?"              (Only id)
+    [Only modelo]   <- query conn "SELECT modelo FROM carros WHERE id_carro = ?"             (Only id)
+    [Only ano]      <- query conn "SELECT CAST(ano AS TEXT) FROM carros WHERE id_carro = ?"  (Only id)
+    [Only placa]    <- query conn "SELECT placa FROM carros WHERE id_carro = ?"              (Only id)
+    let texto = T.pack(show cont ++ "º: " ++ T.unpack(T.justifyLeft 15 ' ' (T.pack marca)) ++ T.unpack(T.justifyLeft 10 ' ' (T.pack modelo)) ++ ano ++ "    " ++ placa ++ "    ")
+    putStrLn (T.unpack(T.justifyLeft 45 ' ' texto) ++ "Alugado " ++ show qtd ++ " vezes.")
+    ranking conn t (cont + 1)
+
+ordemRanking :: Connection -> IO [(Int, Int)]
+ordemRanking conn = do
+    rows <- query_ conn "SELECT id_carro, COUNT(*) as quantidade_alugueis FROM Alugueis GROUP BY id_carro ORDER BY quantidade_alugueis DESC;"
+    return [(id_carro, quantidade_alugueis) | (id_carro, quantidade_alugueis) <- rows]
