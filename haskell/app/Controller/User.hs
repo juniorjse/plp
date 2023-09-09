@@ -62,7 +62,7 @@ menuCliente :: Connection -> UserID -> IO ()
 menuCliente conn userId = do
     putStrLn ""
     putStrLn "Menu:"
-    putStrLn "1. Listar carros"
+    putStrLn "1. Listar carros por categoria"
     putStrLn "2. Realizar aluguel"
     putStrLn "3. Cancelar aluguel"
     putStrLn "0. Sair"
@@ -277,18 +277,15 @@ verificaTempoAluguel :: Connection -> Int -> IO Int
 verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
-    
+
 listarCarrosPorCategoria :: Connection -> String -> IO ()
 listarCarrosPorCategoria conn categoria = do
-    putStrLn ""
-    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
-    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
+    clearScreenOnly
+    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
     
     if null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
-        else mapM_ printCarro carros
-
-printCarro :: (String, String, Int) -> IO ()
-printCarro (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
-        
+        else do
+            putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
+            mapM_ (\(marca, modelo, ano) -> putStrLn $ marca ++ " | " ++ modelo ++ " | " ++ ano) carros
+    
