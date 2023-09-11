@@ -2,6 +2,7 @@
 module Controller.User where
 import System.IO.Unsafe
 Database.PostgreSQL.Simple
+import Data.IORef
 import Database.PostgreSQL.Simple
 import System.IO
 import Control.Exception
