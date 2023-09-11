@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Controller.User where
 import System.IO.Unsafe
-import Data.IORef
+Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple
 import System.IO
 import Control.Exception
@@ -25,6 +25,7 @@ menu conn = do
     putStrLn "Menu:"
     putStrLn "1. Logar"
     putStrLn "2. Cadastrar"
+    putStrLn "3. Remover Carro"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -145,3 +146,24 @@ usuarioComEmailCadastrado :: Connection -> String -> IO Bool
 usuarioComEmailCadastrado conn email = do
     [Only count] <- query conn "SELECT COUNT(*) FROM USUARIOS WHERE email = ?" (Only email)
     return (count /= (0 :: Int))
+
+removeCar :: Connection -> IO ()
+removeCar conn = do
+    putStrLn "Digite o ID do carro que deseja remover:"
+    carIdStr <- getLine
+    let carId = read carIdStr :: Int
+
+    -- Verificar se o carro existe no banco de dados
+    carExists <- query conn "SELECT COUNT(*) FROM Carros WHERE id_carro = ?" (Only carId)
+    case carExists of
+        [Only count] | count == (1 :: Int) -> do
+            -- Verificar se o carro não está alugado
+            isRented <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carId)
+            case isRented of
+                ["Disponível"] -> do
+                    -- Remover o carro
+                    execute conn "DELETE FROM Carros WHERE id_carro = ?" (Only carId)
+                    putStrLn "Carro removido com sucesso."
+                ["Alugado"] -> putStrLn "Este carro está alugado e não pode ser removido."
+                _ -> putStrLn "Status de carro desconhecido."
+        _ -> putStrLn "Carro não encontrado no sistema."
