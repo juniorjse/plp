@@ -1,13 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Controller.User where
+import Data.Maybe (fromJust)
 import System.IO.Unsafe
-Database.PostgreSQL.Simple
 import Data.IORef
 import Database.PostgreSQL.Simple
 import System.IO
 import Control.Exception
 import Control.Exception (catch, SomeException)
 import Data.Maybe (listToMaybe)
+import Data.Int (Int64)
+import Database.PostgreSQL.Simple.ToField (ToField (..))
+import System.Console.ANSI
+import Controller.Locadora 
+import Controller.Mecanica 
 
 data UsuarioExistenteException = UsuarioExistenteException
     deriving (Show)
@@ -19,6 +24,12 @@ userIdRef = unsafePerformIO (newIORef Nothing)
 {-# NOINLINE userIdRef #-}
 
 instance Exception UsuarioExistenteException
+
+clearScreenOnly :: IO ()
+clearScreenOnly = do
+    clearScreen
+    setCursorPosition 0 0
+    return ()
 
 menu :: Connection -> IO ()
 menu conn = do
@@ -40,21 +51,21 @@ menu conn = do
             email <- getLine
             putStrLn "Digite a senha:"
             senha <- getLine
-
+    
             login conn email senha
         "2" -> solicitarCadastro conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
             menu conn
-
-menuCliente :: Connection -> IO ()
-menuCliente conn = do
-
+    
+menuCliente :: Connection -> UserID -> IO ()
+menuCliente conn userId = do
     putStrLn ""
     putStrLn "Menu:"
-    putStrLn "1. Listar carros"
+    putStrLn "1. Listar carros por categoria"
     putStrLn "2. Realizar aluguel"
+    putStrLn "3. Cancelar aluguel"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -64,15 +75,64 @@ menuCliente conn = do
 
     case opcao of
         "1" -> do
-            putStrLn "Opção não implementada"
-            menuCliente conn
+            clearScreenOnly
+            putStrLn "Opções de Categoria:"
+            putStrLn "1. Econômico"
+            putStrLn "2. Intermediário"
+            putStrLn "3. SUV"
+            putStrLn "4. Luxo"
+            putStrLn ""
+            putStrLn "Escolha a categoria de carro desejada (1/2/3/4): "
+            categoria <- getLine
+
+            case categoria of
+                "1" -> listarCarrosPorCategoria conn "Econômico"
+                "2" -> listarCarrosPorCategoria conn "Intermediário"
+                "3" -> listarCarrosPorCategoria conn "SUV"
+                "4" -> listarCarrosPorCategoria conn "Luxo"
+                "5" -> listarCarrosPorCategoria conn "Minivan"
+                "6" -> listarCarrosPorCategoria conn "Sedan"
+                "7" -> listarCarrosPorCategoria conn "Conversível"
+                "8" -> listarCarrosPorCategoria conn "Esportivo"
+                "9" -> listarCarrosPorCategoria conn "Pickup"
+                "10" -> listarCarrosPorCategoria conn "Elétrico"
+                _   -> putStrLn "Opção inválida. Por favor, escolha uma categoria válida."
+            menuCliente conn userId
+
         "2" -> do
-            putStrLn "Opção não implementada"
-            menuCliente conn
+            putStrLn "ID do carro:"
+            carroId <- getLine
+            realizarAluguel conn userId carroId
+        "3" -> cancelarAluguel conn userId
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
-            menuCliente conn
+            menuCliente conn userId
+
+login :: Connection -> String -> String -> IO ()
+login conn email senha = do
+    maybeUserTuple <- buscarUsuarioPorEmailSenha conn email senha
+    putStrLn ""
+
+    case maybeUserTuple of
+        Just (nome, sobrenome, tipo) -> do
+            clearScreenOnly  
+            putStrLn "Bem-vindo!"
+            putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
+            setUserID conn email
+            maybeUserId <- readIORef userIdRef
+            case maybeUserId of
+                Just userId ->
+                    if tipo == "administrador"
+                        then menuLocadora conn
+                        else if tipo == "mecanico"
+                            then menuMecanica conn
+                            else menuCliente conn userId
+                Nothing -> putStrLn "UserID não encontrado."
+        Nothing -> do
+            clearScreenOnly
+            putStrLn "E-mail ou senha incorretos."
+            menu conn
 
 solicitarCadastro :: Connection -> IO ()
 solicitarCadastro conn = do
@@ -112,59 +172,14 @@ solicitarCadastro conn = do
                         execute_ conn "COMMIT"
 
                         putStrLn "Cadastro realizado com sucesso."
-                        menu conn
+                        menu conn         
 
-login :: Connection -> String -> String -> IO ()
-login conn email senha = do
-    usuario <- buscarUsuarioPorEmailSenha conn email senha
-    putStrLn ""
-
-    case usuario of
-        Just (nome, sobrenome) -> do
-            putStrLn $ "Bem-vindo, " ++ nome ++ " " ++ sobrenome ++ "!"
-            setUserID conn email
-            userId <- readIORef userIdRef
-
-            case userId of
-                Just uid -> putStrLn $ "Seu ID de usuário é: " ++ show uid
-            menuCliente conn
-        Nothing -> do
-            putStrLn "E-mail ou senha incorretos."
-            menu conn
-
-setUserID :: Connection -> String -> IO ()
-setUserID conn email = do
-    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
-    writeIORef userIdRef (Just (userId :: Integer))
-            
-
-buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String))
+buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String, String))
 buscarUsuarioPorEmailSenha conn email senha = do
-    users <- query conn "SELECT nome, sobrenome FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
+    users <- query conn "SELECT nome, sobrenome, tipo FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
     return $ listToMaybe users
 
 usuarioComEmailCadastrado :: Connection -> String -> IO Bool
 usuarioComEmailCadastrado conn email = do
     [Only count] <- query conn "SELECT COUNT(*) FROM USUARIOS WHERE email = ?" (Only email)
     return (count /= (0 :: Int))
-
-removeCar :: Connection -> IO ()
-removeCar conn = do
-    putStrLn "Digite o ID do carro que deseja remover:"
-    carIdStr <- getLine
-    let carId = read carIdStr :: Int
-
-    -- Verificar se o carro existe no banco de dados
-    carExists <- query conn "SELECT COUNT(*) FROM Carros WHERE id_carro = ?" (Only carId)
-    case carExists of
-        [Only count] | count == (1 :: Int) -> do
-            -- Verificar se o carro não está alugado
-            isRented <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carId)
-            case isRented of
-                ["Disponível"] -> do
-                    -- Remover o carro
-                    execute conn "DELETE FROM Carros WHERE id_carro = ?" (Only carId)
-                    putStrLn "Carro removido com sucesso."
-                ["Alugado"] -> putStrLn "Este carro está alugado e não pode ser removido."
-                _ -> putStrLn "Status de carro desconhecido."
-        _ -> putStrLn "Carro não encontrado no sistema."
