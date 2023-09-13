@@ -106,7 +106,9 @@ menuCliente conn userId = do
             carroId <- getLine
             realizarAluguel conn userId carroId
         "3" -> cancelarAluguel conn userId
-        "4" -> mostrarRanking conn userId
+        "4" -> do
+            mostrarRanking conn userId
+            menuCliente conn userId 
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
@@ -301,9 +303,8 @@ mostrarRanking :: Connection -> Integer -> IO ()
 mostrarRanking conn userId = do
     ordem <- ordemRanking conn
     putStrLn "------------------------Carros mais alugados------------------------"
-    putStrLn "     MARCA          MODELO   ANO     PLACA      ALUGUEIS "
+    putStrLn "     MARCA          MODELO    ANO     PLACA      ALUGUEIS "
     ranking conn ordem 1
-    menuCliente conn userId
 
 ranking :: Connection -> [(Int, Int)] -> Int -> IO ()
 ranking _ [] _ = putStrLn "--------------------------------------------------------------------"
