@@ -1,18 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Controller.Locadora where
-
 import Database.PostgreSQL.Simple
 import Data.Time
 import Data.Time.Format
 import Controller.Mecanica
 import Control.Exception
+import Data.IORef
+import System.IO.Unsafe (unsafePerformIO)
+
+type LocadoraID = Integer
+
+locadoraIdRef :: IORef (Maybe LocadoraID)
+locadoraIdRef = unsafePerformIO $ do
+    newIORef Nothing
+{-# NOINLINE locadoraIdRef #-}
 
 data LocadoraExistenteException = LocadoraExistenteException
     deriving (Show)
 
-menuLocadora :: Connection -> IO ()
-menuLocadora conn = do
+menuLocadora :: Connection -> LocadoraID -> IO ()
+menuLocadora conn locadoraId = do
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Cadastrar carro"
@@ -30,25 +38,25 @@ menuLocadora conn = do
     case opcao of
         "1" -> do
             putStrLn "Teste1"
-            menuLocadora conn
+            menuLocadora conn locadoraId
         "2" -> do
-            putStrLn "Teste2"
-            menuLocadora conn
+          putStrLn "Teste2"
+          menuLocadora conn locadoraId
         "3" -> do
-            registraDevolucao conn
+          registraDevolucao conn locadoraId
         "4" -> do
-            putStrLn "Teste4"
-            menuLocadora conn
+          putStrLn "Teste4"
+          menuLocadora conn locadoraId
         "5" -> do
-            putStrLn "Teste5"
-            menuLocadora conn
+          putStrLn "Teste5"
+          menuLocadora conn locadoraId
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
-            menuLocadora conn
+            menuLocadora conn locadoraId
 
-registraDevolucao :: Connection -> IO ()
-registraDevolucao conn = do
+registraDevolucao :: Connection -> LocadoraID -> IO ()
+registraDevolucao conn locadoraId = do
     putStrLn "Digite o número do contrato/ Id do aluguel a ser encerrado:"
     numContratoStr <- getLine
     let numContrato = read numContratoStr :: Integer
@@ -60,13 +68,33 @@ registraDevolucao conn = do
             putStrLn "2. Para voltar ao menu inicial"
             opcao <- getLine
             case opcao of
-                "1" -> registraDevolucao conn
-                "2" -> menuLocadora conn
+                "1" -> registraDevolucao conn locadoraId
+                "2" -> menuLocadora conn locadoraId
                 _ -> do
                     putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
-                    menuLocadora conn
+                    menuLocadora conn locadoraId
         [(data_inicio, data_devolucao, id_carro)] -> do
             printAluguel conn (data_inicio, data_devolucao, id_carro)
+            devolucao <- verificaDevolucao data_devolucao
+            case (devolucao :: String) of
+              "Devolução dentro do prazo" -> do
+                valor <- calculaValor numContrato
+                print valor
+              "Devolução adiantada" -> do
+                putStrLn "Motivo da devolução adiantada:"
+                putStrLn "1. Problema no carro"
+                putStrLn "2. Outro motivo"
+                motivo <- getLine
+                case motivo of
+                    "1" -> do
+                        mecanico <- enviaParaMecanico conn id_carro numContrato
+                        print mecanico
+                    "2" -> do
+                        valor <- calculaValor numContrato
+                        print valor
+              "Devolução atrasada" -> do
+                valor <- calculaValor numContrato
+                print valor
 
 
 buscarAluguel :: Connection -> Integer -> IO [(String, String, Integer)]
@@ -93,3 +121,36 @@ printAluguel conn (data_inicio, data_devolucao, id_carro) = do
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
     putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
+
+verificaDevolucao :: String -> IO String
+verificaDevolucao inputDate = do
+    -- Obtém a data atual
+    currentDay <- getCurrentTime >>= return . utctDay
+
+    let parsedDate = parseTimeM True defaultTimeLocale "%Y-%m-%d" inputDate :: Maybe Day
+
+    case parsedDate of
+        Just date -> do
+            if date == currentDay
+                then return "Devolução dentro do prazo."
+                else if date < currentDay
+                    then return "Devolução adiantada"
+                    else
+                        return "Devolução atrasada"
+        Nothing -> return "Data inválida."
+
+-- Funcões temporárias
+-- enviaParaMecanico :: Connection -> (String, String, Integer) -> Bool
+-- enviaParaMecanico conn id_carro id_aluguel = do
+
+enviaParaMecanico :: Connection -> Integer -> Integer -> IO Double
+enviaParaMecanico conn id_carro id_aluguel = do
+    let valorCalculado = 100.0 
+    
+    return valorCalculado
+
+calculaValor ::  Integer -> IO Double
+calculaValor id_aluguel = do
+    let valorCalculado = 100.0 
+    
+    return valorCalculado

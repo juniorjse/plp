@@ -123,7 +123,7 @@ login conn email senha = do
             case maybeUserId of
                 Just userId ->
                     if tipo == "administrador"
-                        then menuLocadora conn
+                        then menuLocadora conn userId
                         else if tipo == "mecanico"
                             then menuMecanica conn
                             else menuCliente conn userId
