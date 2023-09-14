@@ -2,32 +2,13 @@
 
 module Controller.Locadora where
 import Database.PostgreSQL.Simple
-import Data.Time
-import Data.Time.Format
-import Controller.Mecanica
-import Control.Exception
-import Data.IORef
-import System.IO.Unsafe (unsafePerformIO)
-
-type LocadoraID = Integer
-
-locadoraIdRef :: IORef (Maybe LocadoraID)
-locadoraIdRef = unsafePerformIO $ do
-    newIORef Nothing
-{-# NOINLINE locadoraIdRef #-}
-
-data LocadoraExistenteException = LocadoraExistenteException
-    deriving (Show)
 
 menuLocadora :: Connection -> LocadoraID -> IO ()
 menuLocadora conn locadoraId = do
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Cadastrar carro"
-    putStrLn "2. Remover Carro"
-    putStrLn "3. Registrar Devolução"
-    putStrLn "4. Registro de Aluguéis por pessoa"
-    putStrLn "5. Dashboard"
+    putStrLn "2. Locadora teste1"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -41,15 +22,7 @@ menuLocadora conn locadoraId = do
             menuLocadora conn locadoraId
         "2" -> do
           putStrLn "Teste2"
-          menuLocadora conn locadoraId
-        "3" -> do
-          registraDevolucao conn locadoraId
-        "4" -> do
-          putStrLn "Teste4"
-          menuLocadora conn locadoraId
-        "5" -> do
-          putStrLn "Teste5"
-          menuLocadora conn locadoraId
+          menuLocadora conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
