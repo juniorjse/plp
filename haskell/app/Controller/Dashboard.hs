@@ -58,25 +58,30 @@ exibirReceitaTotal :: Connection -> IO ()
 exibirReceitaTotal conn = do
     totalReceita <- calcularReceitaTotal conn
     putStrLn $ "Receita Total: " ++ show totalReceita
+    menuDashboard conn
 
 exibirNumeroDeAlugueis :: Connection -> IO ()
 exibirNumeroDeAlugueis conn = do
     numeroAlugueis <- contarAlugueis conn
     putStrLn $ "Número de Aluguéis: " ++ show numeroAlugueis
+    menuDashboard conn
 
 exibirTotalDeCarros :: Connection -> IO ()
 exibirTotalDeCarros conn = do
     totalCarros <- contarCarros conn
     putStrLn $ "Total de Carros: " ++ show totalCarros
+    menuDashboard conn
 
 exibirCarrosMaisDefeituosos :: Connection -> IO ()
 exibirCarrosMaisDefeituosos conn = do
     carrosDefeituosos <- listarCarrosMaisDefeituosos conn
     putStrLn "Carros mais defeituosos:"
     forM_ carrosDefeituosos (\(marca, modelo) -> putStrLn $ marca ++ " " ++ modelo)
+    menuDashboard conn
 
 exibirAlugueisPorCategoria :: Connection -> IO ()
 exibirAlugueisPorCategoria conn = do
     alugueisPorCategoria <- listarAlugueisPorCategoria conn
     putStrLn "Aluguéis por Categoria:"
     forM_ alugueisPorCategoria (\(categoria, quantidade) -> putStrLn $ categoria ++ ": " ++ show quantidade)
+    menuDashboard conn
