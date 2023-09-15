@@ -67,7 +67,7 @@ finalizarReparo conn = do
             valorReparoStr <- getLine
             let valorReparo = read valorReparoStr :: Double
 
-            [Only aluguel] <- query conn "SELECT id_aluguel FROM Alugueis WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only (carroId :: Int))
+            [Only aluguelId] <- query conn "SELECT id_aluguel FROM Alugueis WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only (carroId :: Int))
 
             execute conn "UPDATE Alugueis SET valor_total = valor_total + ? WHERE id_aluguel = ?" (valorReparo :: Double, aluguelId :: Int)
 
