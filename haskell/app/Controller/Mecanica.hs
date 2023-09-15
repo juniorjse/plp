@@ -53,6 +53,7 @@ chamaCarros conn = do
 
 finalizarReparo :: Connection -> IO ()
 finalizarReparo conn = do
+    listarCarros conn
     putStrLn "Nos informe o ID do carro a fim de ser finalizado o reparo:"
     carroIdStr <- getLine
     let carroId = read carroIdStr :: Int
@@ -66,13 +67,13 @@ finalizarReparo conn = do
             valorReparoStr <- getLine
             let valorReparo = read valorReparoStr :: Double
 
-            execute conn "UPDATE Carros SET status = 'D' WHERE id_carro = ?" (Only carroId)
-
-            [Only aluguelId] <- query conn "SELECT id_aluguel FROM Alugueis WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only (carroId :: Int))
+            [Only aluguel] <- query conn "SELECT id_aluguel FROM Alugueis WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only (carroId :: Int))
 
             execute conn "UPDATE Alugueis SET valor_total = valor_total + ? WHERE id_aluguel = ?" (valorReparo :: Double, aluguelId :: Int)
 
             execute conn "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only carroId)
+
+            execute conn "UPDATE Carros SET status = 'D' WHERE id_carro = ?" (Only carroId)
 
             if valorReparo > 0
                 then putStrLn "Valor do reparo computado."
