@@ -64,7 +64,7 @@ menuCliente :: Connection -> UserID -> IO ()
 menuCliente conn userId = do
     putStrLn ""
     putStrLn "Menu:"
-    putStrLn "1. Listar carros"
+    putStrLn "1. Listar carros por categoria"
     putStrLn "2. Realizar aluguel"
     putStrLn "3. Cancelar aluguel"
     putStrLn "4. Ranking de Carros Mais Alugados"
@@ -283,12 +283,11 @@ verificaTempoAluguel :: Connection -> Int -> IO Int
 verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
-    
+
 listarCarrosPorCategoria :: Connection -> String -> IO ()
 listarCarrosPorCategoria conn categoria = do
-    putStrLn ""
-    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
-    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
+    clearScreenOnly
+    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
     
     if Prelude.null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
