@@ -286,12 +286,15 @@ verificaTempoAluguel conn aluguelId = do
 
 listarCarrosPorCategoria :: Connection -> String -> IO ()
 listarCarrosPorCategoria conn categoria = do
-    clearScreenOnly
-    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
+    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
+    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria] :: IO [(T.Text, T.Text, Integer)]
     
     if Prelude.null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
-        else mapM_ printCarro carros
+        else do
+            let carrosComAnoInteger :: [(T.Text, T.Text, Integer)]
+                carrosComAnoInteger = carros
+            mapM_ (\(marca, modelo, ano) -> putStrLn $ T.unpack marca ++ " | " ++ T.unpack modelo ++ " | " ++ show ano) carrosComAnoInteger
 
 printCarro :: (String, String, Int) -> IO ()
 printCarro (marca, modelo, ano) = do
