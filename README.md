@@ -13,13 +13,13 @@ O projeto consiste em desenvolver um sistema de locadora de carros operado por t
      - Cancelamento de aluguel.
      - Visualização de Ranking de carros por popularidade (mais alugados).
 
-**2. Locadora** (Admin)
+* **Locadora** (Admin)  
      - Cadastrar Carro.
      - Registrar a devolução.
      - Visualizar o registro de alugueis por pessoa.
      - Visualizar _Dashboard_ com informações e estatísticas da locadora.
 
-**3. Mecânico**
+* **Mecânico**  
      - Visualizar carros que necessitam de reparo.
      - Marcar o reparo de um carro como finalizado.
 
