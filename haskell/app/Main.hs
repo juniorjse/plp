@@ -4,7 +4,7 @@ import Controller.User
 import Database.PostgreSQL.Simple
 import LocalDB.ConnectionDB
 import System.Console.ANSI
-
+ 
 main :: IO ()
 main = do
   conn <- iniciandoDatabase
