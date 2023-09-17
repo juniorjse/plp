@@ -11,8 +11,8 @@ import Data.Maybe (listToMaybe)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import System.Console.ANSI
-import Controller.Locadora 
-import Controller.Mecanica 
+import Controller.Locadora
+import Controller.Mecanica
 import Data.Text as T
 import qualified Database.PostgreSQL.LibPQ as Data
 
@@ -52,14 +52,94 @@ menu conn = do
             email <- getLine
             putStrLn "Digite a senha:"
             senha <- getLine
-    
+
             login conn email senha
         "2" -> solicitarCadastro conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
             menu conn
-    
+
+login :: Connection -> String -> String -> IO ()
+login conn email senha = do
+    maybeUserTuple <- buscarUsuarioPorEmailSenha conn email senha
+    putStrLn ""
+
+    case maybeUserTuple of
+        Just (nome, sobrenome, tipo) -> do
+            clearScreenOnly
+            putStrLn "Bem-vindo!"
+            putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
+            setUserID conn email
+            maybeUserId <- readIORef userIdRef
+            case maybeUserId of
+                Just userId ->
+                    if tipo == "administrador"
+                        then menuLocadora conn
+                        else if tipo == "mecanico"
+                            then menuMecanica conn
+                            else menuCliente conn userId
+                Nothing -> putStrLn "UserID não encontrado."
+        Nothing -> do
+            clearScreenOnly
+            putStrLn "E-mail ou senha incorretos."
+            menu conn
+
+buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String, String))
+buscarUsuarioPorEmailSenha conn email senha = do
+    users <- query conn "SELECT nome, sobrenome, tipo FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
+    return $ listToMaybe users
+
+setUserID :: Connection -> String -> IO ()
+setUserID conn email = do
+    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
+    writeIORef userIdRef (Just (userId :: Integer))
+
+solicitarCadastro :: Connection -> IO ()
+solicitarCadastro conn = do
+    putStrLn "Digite o nome:"
+    nome <- getLine
+    putStrLn "Digite o sobrenome:"
+    sobrenome <- getLine
+    putStrLn "Digite o e-mail:"
+    email <- getLine
+    putStrLn "Digite a senha (mínimo de 7 caracteres):"
+    senha <- getLine
+    putStrLn "Digite a senha novamente:"
+    confirmaSenha <- getLine
+
+    if Prelude.null nome || Prelude.null sobrenome || Prelude.null email || Prelude.null senha
+        then do
+            putStrLn "Campos não podem ser nulos. Por favor, preencha todos os campos."
+            solicitarCadastro conn
+        else if senha /= confirmaSenha
+            then do
+                putStrLn "Senhas diferentes. Tente novamente."
+                solicitarCadastro conn
+        else if Prelude.length senha < 7
+            then do
+                putStrLn "A senha deve ter no mínimo 7 caracteres."
+                solicitarCadastro conn
+            else do
+                emailExists <- usuarioComEmailCadastrado conn email
+
+                if emailExists
+                    then do
+                        putStrLn "Usuário com e-mail já cadastrado. Por favor, forneça um e-mail diferente."
+                        solicitarCadastro conn
+                    else do
+                        execute_ conn "BEGIN"
+                        execute conn "INSERT INTO USUARIOS (nome, sobrenome, email, senha) VALUES (?, ?, ?, ?)" (nome, sobrenome, email, senha)
+                        execute_ conn "COMMIT"
+
+                        putStrLn "Cadastro realizado com sucesso."
+                        menu conn
+
+usuarioComEmailCadastrado :: Connection -> String -> IO Bool
+usuarioComEmailCadastrado conn email = do
+    [Only count] <- query conn "SELECT COUNT(*) FROM USUARIOS WHERE email = ?" (Only email)
+    return (count /= (0 :: Int))
+
 menuCliente :: Connection -> UserID -> IO ()
 menuCliente conn userId = do
     putStrLn ""
@@ -106,93 +186,24 @@ menuCliente conn userId = do
             carroId <- getLine
             realizarAluguel conn userId carroId
         "3" -> cancelarAluguel conn userId
-        "4" -> do
-            mostrarRanking conn userId
-            menuCliente conn userId 
+        "4" -> mostrarRanking conn userId
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
             menuCliente conn userId
 
-login :: Connection -> String -> String -> IO ()
-login conn email senha = do
-    maybeUserTuple <- buscarUsuarioPorEmailSenha conn email senha
-    putStrLn ""
+listarCarrosPorCategoria :: Connection -> String -> IO ()
+listarCarrosPorCategoria conn categoria = do
+    clearScreenOnly
+    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
 
-    case maybeUserTuple of
-        Just (nome, sobrenome, tipo) -> do
-            clearScreenOnly  
-            putStrLn "Bem-vindo!"
-            putStrLn $ "Nome: " ++ nome ++ " " ++ sobrenome
-            setUserID conn email
-            maybeUserId <- readIORef userIdRef
-            case maybeUserId of
-                Just userId ->
-                    if tipo == "administrador"
-                        then menuLocadora conn
-                        else if tipo == "mecanico"
-                            then menuMecanica conn
-                            else menuCliente conn userId
-                Nothing -> putStrLn "UserID não encontrado."
-        Nothing -> do
-            clearScreenOnly
-            putStrLn "E-mail ou senha incorretos."
-            menu conn
+    if Prelude.null carros
+        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
+        else mapM_ printCarro carros
 
-solicitarCadastro :: Connection -> IO ()
-solicitarCadastro conn = do
-    putStrLn "Digite o nome:"
-    nome <- getLine
-    putStrLn "Digite o sobrenome:"
-    sobrenome <- getLine
-    putStrLn "Digite o e-mail:"
-    email <- getLine
-    putStrLn "Digite a senha (mínimo de 7 caracteres):"
-    senha <- getLine
-    putStrLn "Digite a senha novamente:"
-    confirmaSenha <- getLine
-
-    if Prelude.null nome || Prelude.null sobrenome || Prelude.null email || Prelude.null senha
-        then do
-            putStrLn "Campos não podem ser nulos. Por favor, preencha todos os campos."
-            solicitarCadastro conn
-        else if senha /= confirmaSenha
-            then do
-                putStrLn "Senhas diferentes. Tente novamente."
-                solicitarCadastro conn
-        else if Prelude.length senha < 7
-            then do
-                putStrLn "A senha deve ter no mínimo 7 caracteres."
-                solicitarCadastro conn
-            else do
-                emailExists <- usuarioComEmailCadastrado conn email
-
-                if emailExists
-                    then do
-                        putStrLn "Usuário com e-mail já cadastrado. Por favor, forneça um e-mail diferente."
-                        solicitarCadastro conn
-                    else do
-                        execute_ conn "BEGIN"
-                        execute conn "INSERT INTO USUARIOS (nome, sobrenome, email, senha) VALUES (?, ?, ?, ?)" (nome, sobrenome, email, senha)
-                        execute_ conn "COMMIT"
-
-                        putStrLn "Cadastro realizado com sucesso."
-                        menu conn         
-
-buscarUsuarioPorEmailSenha :: Connection -> String -> String -> IO (Maybe (String, String, String))
-buscarUsuarioPorEmailSenha conn email senha = do
-    users <- query conn "SELECT nome, sobrenome, tipo FROM USUARIOS WHERE email = ? AND senha = ?" (email, senha)
-    return $ listToMaybe users
-
-usuarioComEmailCadastrado :: Connection -> String -> IO Bool
-usuarioComEmailCadastrado conn email = do
-    [Only count] <- query conn "SELECT COUNT(*) FROM USUARIOS WHERE email = ?" (Only email)
-    return (count /= (0 :: Int))
-
-setUserID :: Connection -> String -> IO ()
-setUserID conn email = do
-    [Only userId] <- query conn "SELECT id_usuario FROM USUARIOS WHERE email = ?" (Only email)
-    writeIORef userIdRef (Just (userId :: Integer))
+printCarro :: (String, String, Int) -> IO ()
+printCarro (marca, modelo, ano) = do
+    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
 
 realizarAluguel :: Connection -> UserID -> String -> IO ()
 realizarAluguel conn userId carroId = do
@@ -210,11 +221,11 @@ realizarAluguel conn userId carroId = do
             putStrLn $ "Valor total: " ++ show valor_total
             putStrLn ""
             putStrLn "Deseja confirmar o aluguel desse carro?"
-            putStrLn "Sim(digite 1), Não(digite 2)"
+            putStrLn " 1. Sim \n 2.Não"
             confirma <- getLine
             case confirma of
                 "1" -> do
-                    execute conn "INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (?, ?, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day' * ?, ?, 'ativo')"(carroId, userId, dias_aluguel, valor_total)
+                    execute conn "INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (?, ?, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day' * ?, ?, 'ativo')" (carroId, userId, dias_aluguel, valor_total)
                     execute conn "UPDATE carros SET status = 'O' WHERE id_carro = ?" (Only carroId)
                     putStrLn "Aluguel realizado com sucesso!"
                     menuCliente conn userId
@@ -228,13 +239,14 @@ cancelarAluguel conn userId = do
     alugueis <- buscarAlugueisPorUsuario conn userId
     putStrLn ""
     putStrLn "Aluguéis do usuário:"
-    
+
     case alugueis of
         [] -> putStrLn "Nenhum aluguel encontrado para este usuário."
         _ -> do
             putStrLn $ "ID do Aluguel | ID do Carro | Valor Total"
             putStrLn "--------------------------------------------"
             mapM_ printAluguelInfo alugueis
+            putStrLn ""
 
             putStrLn "Digite o ID do aluguel que deseja cancelar:"
             aluguelIdStr <- getLine
@@ -250,7 +262,7 @@ cancelarAluguel conn userId = do
                     putStrLn "Aluguel possível de ser cancelado."
                     putStrLn ""
                     putStrLn "Deseja confirmar o cancelamento desse aluguel?"
-                    putStrLn "Sim(digite 1), Não(digite 2)"
+                    putStrLn " 1. Sim \n 2.Não"
                     confirma <- getLine
                     case confirma of
                         "1" -> do
@@ -272,8 +284,7 @@ cancelarAluguel conn userId = do
 
 buscarAlugueisPorUsuario :: Connection -> Integer -> IO [(Integer, Integer, Double)]
 buscarAlugueisPorUsuario conn userId = do
-    alugueis <- query conn "SELECT id_aluguel, id_carro, valor_total FROM Alugueis WHERE id_usuario = ? AND status_aluguel = 'ativo'" (Only userId)
-    return alugueis
+    query conn "SELECT id_aluguel, id_carro, valor_total FROM Alugueis WHERE id_usuario = ? AND status_aluguel = 'ativo'" (Only userId)
 
 printAluguelInfo :: (Integer, Integer, Double) -> IO ()
 printAluguelInfo (idAluguel, idCarro, valorTotal) = do
@@ -284,39 +295,22 @@ verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
 
-listarCarrosPorCategoria :: Connection -> String -> IO ()
-listarCarrosPorCategoria conn categoria = do
-    clearScreenOnly
-    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
-    
-    if Prelude.null carros
-        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
-        else mapM_ printCarro carros
-
-printCarro :: (String, String, Int) -> IO ()
-printCarro (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
-        
-
 mostrarRanking :: Connection -> Integer -> IO ()
 mostrarRanking conn userId = do
     ordem <- ordemRanking conn
     putStrLn "------------------------Carros mais alugados------------------------"
     putStrLn "     MARCA          MODELO    ANO     PLACA      ALUGUEIS "
     ranking conn ordem 1
+    menuCliente conn userId
 
-ranking :: Connection -> [(Int, Int)] -> Int -> IO ()
+ranking :: Connection -> [(Int, Text, Text, Int, Text, Int)] -> Int -> IO ()
 ranking _ [] _ = putStrLn "--------------------------------------------------------------------"
-ranking conn ((id, qtd):t) cont = do
-    [Only marca]    <- query conn "SELECT marca FROM carros WHERE id_carro = ?"              (Only id)
-    [Only modelo]   <- query conn "SELECT modelo FROM carros WHERE id_carro = ?"             (Only id)
-    [Only ano]      <- query conn "SELECT CAST(ano AS TEXT) FROM carros WHERE id_carro = ?"  (Only id)
-    [Only placa]    <- query conn "SELECT placa FROM carros WHERE id_carro = ?"              (Only id)
-    let texto = T.pack(show cont ++ "º: " ++ T.unpack(T.justifyLeft 15 ' ' (T.pack marca)) ++ T.unpack(T.justifyLeft 10 ' ' (T.pack modelo)) ++ ano ++ "    " ++ placa ++ "    ")
-    putStrLn (T.unpack(T.justifyLeft 45 ' ' texto) ++ "Alugado " ++ show qtd ++ " vezes.")
+ranking conn ((id, marca, modelo, ano, placa, qtd):t) cont = do
+    let texto = T.pack (show cont ++ "º: " ++ T.unpack (T.justifyLeft 15 ' '  marca) ++ T.unpack (T.justifyLeft 10 ' ' modelo) ++ show ano ++ "    " ++ T.unpack placa ++ "    ")
+    putStrLn (T.unpack (T.justifyLeft 45 ' ' texto) ++ "Alugado " ++ show qtd ++ " vezes.")
     ranking conn t (cont + 1)
 
-ordemRanking :: Connection -> IO [(Int, Int)]
+ordemRanking :: Connection -> IO [(Int, Text, Text, Int, Text, Int)]
 ordemRanking conn = do
-    rows <- query_ conn "SELECT id_carro, COUNT(*) as quantidade_alugueis FROM Alugueis GROUP BY id_carro ORDER BY quantidade_alugueis DESC;"
-    return [(id_carro, quantidade_alugueis) | (id_carro, quantidade_alugueis) <- rows]
+    rows <- query_ conn "SELECT id_carro, marca, modelo, ano, placa, COUNT(*) as quantidade_alugueis FROM Alugueis GROUP BY id_carro ORDER BY quantidade_alugueis DESC;"
+    return [(id_carro, marca, modelo, ano, placa, quantidade_alugueis) | (id_carro, marca, modelo, ano, placa, quantidade_alugueis) <- rows]

@@ -46,20 +46,17 @@ contarCarros conn = do
 
 listarCarrosMaisDefeituosos :: Connection -> IO [(String, String)]
 listarCarrosMaisDefeituosos conn = do
-    carrosDefeituosos <- query_ conn "SELECT marca, modelo FROM Carros WHERE status = 'R'"
-    return carrosDefeituosos
+    query_ conn "SELECT marca, modelo FROM Carros WHERE status = 'R'"
 
 listarAlugueisPorCategoria :: Connection -> IO [(String, Int)]
 listarAlugueisPorCategoria conn = do
-    alugueisPorCategoria <- query_ conn "SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria"
-    return alugueisPorCategoria
+    query_ conn "SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria"
 
 exibirReceitaTotal :: Connection -> IO ()
 exibirReceitaTotal conn = do
     totalReceita <- calcularReceitaTotal conn
     putStrLn $ "Receita Total: " ++ show totalReceita
     menuDashboard conn
-
 exibirNumeroDeAlugueis :: Connection -> IO ()
 exibirNumeroDeAlugueis conn = do
     numeroAlugueis <- contarAlugueis conn
