@@ -1,12 +1,29 @@
-# MÃO NA RODA - LOCADORA DE AUTOMÓVEIS 
+# 🚗 MÃO NA RODA - LOCADORA DE AUTOMÓVEIS 🛻
 
-## O SISTEMA
+## 🖥️ O SISTEMA
 
-Esse é um sistema para uma locadora de automóveis que roda em terminal e tem como usuários principais: o Cliente, a Locadora e o Mecânico. Como veremos detalhadamente mais a frente, o cliente poderá, após se cadastrar, visualizar os carros disponíveis, realizar e cancelar alugueis; a Locadora pode cadastrar novos carros nos banco de dados, registrar a devolução de um carro e visualizar alugueis passados dos clientes; e o mecânico pode visualizar os carros que foram entregues com defeitos, registrar que o reparo foi realizado e inserir o valor adicional do reparo ao aluguel.
+O projeto consiste em desenvolver um sistema de locadora de carros operado por terminal de linha de comando. Os principais requisitos incluem autenticação de usuários, cadastro de novos usuários e carros, registro de aluguéis e devoluções, listagem de carros disponíveis, ranking de mais alugados, sistema de recomendação e cancelamento de aluguéis. O sistema busca oferecer uma solução eficiente para a gestão de aluguéis de carros, proporcionando uma experiência ágil e facilitada para os usuários e a locadora. Nesse projeto terá 3 atores principais que serão os usuários(clientes), locadora e o mecânico, onde cada um terá seus respectivos menus com as opções necessárias.
 
-## REQUISITOS FUNCIONAIS
+## 📋 REQUISITOS FUNCIONAIS
 
-## COMO EXECUTAR
+* **Cliente**  
+     - Login e Cadastro de novos usuários.
+     - Visualização de carros por categoria.
+     - Realização de aluguel.
+     - Cancelamento de aluguel.
+     - Visualização de Ranking de carros por popularidade (mais alugados).
+
+**2. Locadora** (Admin)
+     - Cadastrar Carro.
+     - Registrar a devolução.
+     - Visualizar o registro de alugueis por pessoa.
+     - Visualizar _Dashboard_ com informações e estatísticas da locadora.
+
+**3. Mecânico**
+     - Visualizar carros que necessitam de reparo.
+     - Marcar o reparo de um carro como finalizado.
+
+## 💻 COMO EXECUTAR
 
 ### Instalação do PostgreSQL:
 
@@ -24,7 +41,7 @@ Esse é um sistema para uma locadora de automóveis que roda em terminal e tem c
      Port: 5433
      Password: plp123 
 
-- ATENÇÃO. Porta e/ou senha diferentes das utilizadas na aplicação podem acarretar em problemas na execução. Ao instalar o PostgreSQL tenha certeza que as informações estão compatíveis com o projeto.
+- **ATENÇÃO:** Porta e/ou senha diferentes das utilizadas na aplicação podem acarretar em problemas na execução. Ao instalar o PostgreSQL tenha certeza que as informações estão compatíveis com o projeto.
 
 ### HASKELL:
 
@@ -39,7 +56,7 @@ Esse é um sistema para uma locadora de automóveis que roda em terminal e tem c
 2. Se o seu PostgreSQL já estiver devidamente configurado, abra um terminal no diretório prolog\src e digite o comando `swipl run.pl` para executar a aplicação.
 
 
-## AUTORES
+## 👩‍💻AUTORES👨‍💻
 - [@juniorjse](https://github.com/juniorjse)
 - [@Leticiagc](https://github.com/Leticiagc)
 - [@carolcordeiro](https://github.com/carolcordeiro)
