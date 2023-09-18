@@ -192,19 +192,6 @@ menuCliente conn userId = do
             putStrLn "Opção inválida. Por favor, escolha novamente."
             menuCliente conn userId
 
-listarCarrosPorCategoria :: Connection -> String -> IO ()
-listarCarrosPorCategoria conn categoria = do
-    clearScreenOnly
-    carros <- query conn "SELECT marca, modelo, to_char(ano, '9999') as ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria]
-
-    if Prelude.null carros
-        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
-        else mapM_ printCarro carros
-
-printCarro :: (String, String, Int) -> IO ()
-printCarro (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
-
 realizarAluguel :: Connection -> UserID -> String -> IO ()
 realizarAluguel conn userId carroId = do
     putStrLn "Dias de aluguel do carro:"
