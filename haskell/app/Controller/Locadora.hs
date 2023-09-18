@@ -24,8 +24,7 @@ menuLocadora conn = do
             registrarCarro conn
             menuLocadora conn
         "2" -> do
-            removerCarro conn
-            menuLocadora conn
+            removerCarro conn           
         "3" -> do
             menuDashboard conn
             menuLocadora conn
