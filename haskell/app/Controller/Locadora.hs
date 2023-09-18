@@ -4,6 +4,8 @@ module Controller.Locadora where
 import Database.PostgreSQL.Simple
 import Control.Monad (void)
 import Controller.Dashboard
+import Data.Time (Day) 
+import Data.Time.Format (formatTime, defaultTimeLocale) 
 
 menuLocadora :: Connection -> IO ()
 menuLocadora conn = do
@@ -11,7 +13,8 @@ menuLocadora conn = do
     putStrLn "Menu:"
     putStrLn "1. Cadastrar carro"
     putStrLn "2. Remover carro"
-    putStrLn "3. Dashboard"
+    putStrLn "3. Registro de Aluguéis por Cliente"
+    putStrLn "4. Dashboard"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -24,8 +27,11 @@ menuLocadora conn = do
             registrarCarro conn
             menuLocadora conn
         "2" -> do
-            removerCarro conn           
+            removerCarro conn
         "3" -> do
+            listarAlugueisPorCliente conn
+            menuLocadora conn
+        "4" -> do
             menuDashboard conn
             menuLocadora conn
         "0" -> return ()
@@ -155,3 +161,44 @@ verificaCarroDisponivel :: Connection -> Integer -> IO Bool
 verificaCarroDisponivel conn carroId = do
     [Only status] <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carroId)
     return (status == ("D" :: String))
+
+listarAlugueisPorCliente :: Connection -> IO ()
+listarAlugueisPorCliente conn = do
+    putStrLn "Digite o ID do cliente para listar os registros de aluguéis:"
+    clienteIdStr <- getLine
+    let clienteId = read clienteIdStr :: Integer
+
+    clienteExiste <- verificaClienteExistente conn clienteId
+
+    if clienteExiste
+        then do
+            alugueis <- obterAlugueisPorCliente conn clienteId
+            if null alugueis
+                then do
+                    putStrLn "Não há registros de aluguéis para este cliente."
+                else do
+                    putStrLn "Registros de Aluguéis:"
+                    mapM_ (mostrarRegistroAluguel) alugueis
+        else do
+            putStrLn "Cliente não encontrado na base de dados."
+    menuLocadora conn
+
+mostrarRegistroAluguel :: (String, String, Int, Day, Day, Double, String) -> IO ()
+mostrarRegistroAluguel (marca, modelo, ano, dataInicio, dataDevolucao, valor, status) = do
+    putStrLn $ "Carro: " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
+    putStrLn $ "Data de Início: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
+    putStrLn $ "Data de Devolução: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
+    putStrLn $ "Valor do Aluguel: " ++ show valor
+    putStrLn $ "Status do Aluguel: " ++ status
+    putStrLn ""
+
+-- Função auxiliar para verificar se o cliente existe na base de dados
+verificaClienteExistente :: Connection -> Integer -> IO Bool
+verificaClienteExistente conn clienteId = do
+    [Only count] <- query conn "SELECT COUNT(*) FROM Usuarios WHERE id_usuario = ?" (Only clienteId)
+    return (count > (0 :: Int))
+
+-- Função auxiliar para obter registros de aluguéis por cliente
+obterAlugueisPorCliente :: Connection -> Integer -> IO [(String, String, Int, Day, Day, Double, String)]
+obterAlugueisPorCliente conn clienteId = do
+    query conn "SELECT c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN Carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = ?" (Only clienteId)
