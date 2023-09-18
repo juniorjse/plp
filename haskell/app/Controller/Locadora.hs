@@ -2,6 +2,7 @@
 
 module Controller.Locadora where
 import Database.PostgreSQL.Simple
+import Control.Monad (void)
 import Controller.Dashboard
 
 menuLocadora :: Connection -> IO ()
@@ -9,8 +10,8 @@ menuLocadora conn = do
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Cadastrar carro"
-    putStrLn "2. Dashboard"
-    putStrLn "3. Remover carro"
+    putStrLn "2. Remover carro"
+    putStrLn "3. Dashboard"
     putStrLn "0. Sair"
     putStrLn "Escolha uma opção:"
 
@@ -23,10 +24,10 @@ menuLocadora conn = do
             registrarCarro conn
             menuLocadora conn
         "2" -> do
-            menuDashboard conn
+            removerCarro conn
             menuLocadora conn
         "3" -> do
-            removerCarro conn
+            menuDashboard conn
             menuLocadora conn
         "0" -> return ()
         _ -> do
@@ -108,3 +109,50 @@ carroJaCadastrado :: Connection -> String -> IO Bool
 carroJaCadastrado conn placa = do
     [Only count] <- query conn "SELECT COUNT(*) FROM carros WHERE placa = ?" (Only placa)
     return (count /= (0 :: Int))
+
+removerCarro :: Connection -> IO ()
+removerCarro conn = do
+    putStrLn "Informe o ID do carro que deseja remover:"
+    carroIdStr <- getLine
+    let carroId = read carroIdStr :: Integer  
+
+    carroExiste <- verificaCarroExistente conn carroId
+
+    if carroExiste
+        then do
+            carroDisponivel <- verificaCarroDisponivel conn carroId
+
+            if carroDisponivel
+                then do
+                    putStrLn "Tem certeza de que deseja remover este carro? (Sim/Não)"
+                    confirmacao <- getLine
+
+                    case confirmacao of
+                        "Sim" -> do
+                            removeCarroDoSistema conn carroId
+                            putStrLn "Carro removido com sucesso!"
+                            menuLocadora conn
+                        "Não" -> menuLocadora conn
+                        _ -> do
+                            putStrLn "Opção inválida. Por favor, escolha novamente."
+                            removerCarro conn
+                else do
+                    putStrLn "Este carro está atualmente alugado (status 'O') e não pode ser removido."
+                    menuLocadora conn
+        else do
+            putStrLn "ID de carro inválido ou inexistente. Tente novamente."
+            removerCarro conn
+
+removeCarroDoSistema :: Connection -> Integer -> IO ()
+removeCarroDoSistema conn carroId = do
+    void $ execute conn "DELETE FROM carros WHERE id_carro = ?" (Only carroId)
+
+verificaCarroExistente :: Connection -> Integer -> IO Bool
+verificaCarroExistente conn carroId = do
+    [Only count] <- query conn "SELECT COUNT(*) FROM Carros WHERE id_carro = ?" (Only carroId)
+    return (count > (0 :: Int))
+
+verificaCarroDisponivel :: Connection -> Integer -> IO Bool
+verificaCarroDisponivel conn carroId = do
+    [Only status] <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carroId)
+    return (status == ("D" :: String))
