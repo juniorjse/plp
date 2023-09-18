@@ -295,6 +295,22 @@ verificaTempoAluguel conn aluguelId = do
     [Only result] <- query conn "SELECT verificaTempoAluguel(?)" (Only aluguelId)
     return result
 
+listarCarrosPorCategoria :: Connection -> String -> IO ()
+listarCarrosPorCategoria conn categoria = do
+    putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
+    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria] :: IO [(T.Text, T.Text, Integer)]
+    
+    if Prelude.null carros
+        then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
+        else do
+            let carrosComAnoInteger :: [(T.Text, T.Text, Integer)]
+                carrosComAnoInteger = carros
+            mapM_ (\(marca, modelo, ano) -> putStrLn $ T.unpack marca ++ " | " ++ T.unpack modelo ++ " | " ++ show ano) carrosComAnoInteger
+
+printCarro :: (String, String, Int) -> IO ()
+printCarro (marca, modelo, ano) = do
+    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano    
+
 mostrarRanking :: Connection -> Integer -> IO ()
 mostrarRanking conn userId = do
     ordem <- ordemRanking conn
