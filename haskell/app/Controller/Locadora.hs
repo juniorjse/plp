@@ -5,7 +5,7 @@ import Database.PostgreSQL.Simple
 import Control.Monad (void)
 import Controller.Dashboard
 import Data.Time (Day) 
-import Data.Time.Format (formatTime, defaultTimeLocale) 
+import Data.Time.Format (formatTime, defaultTimeLocale)
 
 menuLocadora :: Connection -> IO ()
 menuLocadora conn = do
@@ -30,7 +30,6 @@ menuLocadora conn = do
             removerCarro conn
         "3" -> do
             listarAlugueisPorCliente conn
-            menuLocadora conn
         "4" -> do
             menuDashboard conn
             menuLocadora conn
@@ -115,10 +114,13 @@ carroJaCadastrado conn placa = do
     [Only count] <- query conn "SELECT COUNT(*) FROM carros WHERE placa = ?" (Only placa)
     return (count /= (0 :: Int))
 
+
+-- Remove um carro do banco de dados
 removerCarro :: Connection -> IO ()
 removerCarro conn = do
     putStrLn "Informe o ID do carro que deseja remover:"
     carroIdStr <- getLine
+    putStrLn ""
     let carroId = read carroIdStr :: Integer  
 
     carroExiste <- verificaCarroExistente conn carroId
@@ -162,10 +164,13 @@ verificaCarroDisponivel conn carroId = do
     [Only status] <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carroId)
     return (status == ("D" :: String))
 
+
+-- Registros de Aluguéis por Cliente
 listarAlugueisPorCliente :: Connection -> IO ()
 listarAlugueisPorCliente conn = do
     putStrLn "Digite o ID do cliente para listar os registros de aluguéis:"
     clienteIdStr <- getLine
+    putStrLn ""
     let clienteId = read clienteIdStr :: Integer
 
     clienteExiste <- verificaClienteExistente conn clienteId
@@ -188,17 +193,15 @@ mostrarRegistroAluguel (marca, modelo, ano, dataInicio, dataDevolucao, valor, st
     putStrLn $ "Carro: " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
     putStrLn $ "Data de Início: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
     putStrLn $ "Data de Devolução: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
-    putStrLn $ "Valor do Aluguel: " ++ show valor
+    putStrLn $ "Valor do Aluguel: $ " ++ show valor
     putStrLn $ "Status do Aluguel: " ++ status
     putStrLn ""
 
--- Função auxiliar para verificar se o cliente existe na base de dados
 verificaClienteExistente :: Connection -> Integer -> IO Bool
 verificaClienteExistente conn clienteId = do
     [Only count] <- query conn "SELECT COUNT(*) FROM Usuarios WHERE id_usuario = ?" (Only clienteId)
     return (count > (0 :: Int))
 
--- Função auxiliar para obter registros de aluguéis por cliente
 obterAlugueisPorCliente :: Connection -> Integer -> IO [(String, String, Int, Day, Day, Double, String)]
 obterAlugueisPorCliente conn clienteId = do
     query conn "SELECT c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN Carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = ?" (Only clienteId)
