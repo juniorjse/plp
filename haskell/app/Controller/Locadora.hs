@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Controller.Locadora where
-import Database.PostgreSQL.Simple
+import Data.Time (Day)
 import Data.Time
-import Data.Time.Format
+import Data.Time (getCurrentTime)
+import Data.Time.Format (formatTime, defaultTimeLocale) 
 import Controller.Mecanica
 import Control.Exception
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Controller.Dashboard 
+import Database.PostgreSQL.Simple
 
 type LocadoraID = Integer
 
@@ -97,9 +99,11 @@ registraDevolucao conn locadoraId = do
                 print valor
 
 
-buscarAluguel :: Connection -> Integer -> IO [(String, String, Integer)]
+buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer)]
 buscarAluguel conn numContrato = do
-    query conn "SELECT data_inicio, data_devolucao, id_carro FROM Alugueis WHERE id_aluguel = ? AND status_aluguel = 'ativo'" (Only numContrato)
+    alugueis <- query conn "SELECT data_inicio, data_devolucao, id_carro FROM Alugueis WHERE id_aluguel = ? AND status_aluguel = 'ativo'" (Only numContrato)
+    return alugueis
+
 
 buscarCarro :: Connection -> Integer -> IO ()
 buscarCarro conn id_carro = do
@@ -112,32 +116,29 @@ buscarCarro conn id_carro = do
         else printCarroLocadora (head carro)
     
 
-printAluguel :: Connection -> (String, String, Integer) -> IO ()
+printAluguel :: Connection -> (Day, Day, Integer) -> IO ()
 printAluguel conn (data_inicio, data_devolucao, id_carro) = do
     putStrLn "Carro Alugado: "
     buscarCarro conn id_carro
-    putStrLn $ "Data de início do aluguel: " ++ data_inicio ++ ", Data de devolução: " ++ data_devolucao
+    putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ ", Data de devolução: " ++ show data_devolucao
 
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
     putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
 
-verificaDevolucao :: String -> IO String
+verificaDevolucao :: Day -> IO String
 verificaDevolucao inputDate = do
     -- Obtém a data atual
     currentDay <- getCurrentTime >>= return . utctDay
 
-    let parsedDate = parseTimeM True defaultTimeLocale "%Y-%m-%d" inputDate :: Maybe Day
+    if inputDate == currentDay
+        then return "Devolução dentro do prazo."
+        else if inputDate < currentDay
+            then return "Devolução adiantada"
+            else return "Devolução atrasada"
 
-    case parsedDate of
-        Just date -> do
-            if date == currentDay
-                then return "Devolução dentro do prazo."
-                else if date < currentDay
-                    then return "Devolução adiantada"
-                    else
-                        return "Devolução atrasada"
-        Nothing -> return "Data inválida."
+
+
 
 -- Funcões temporárias
 -- enviaParaMecanico :: Connection -> (String, String, Integer) -> Bool
