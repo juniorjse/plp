@@ -4,12 +4,12 @@ module Controller.Locadora where
 import Data.Time (Day)
 import Data.Time
 import Data.Time (getCurrentTime)
-import Data.Time.Format (formatTime, defaultTimeLocale) 
+import Data.Time.Format (formatTime, defaultTimeLocale)
 import Controller.Mecanica
 import Control.Exception
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import Controller.Dashboard 
+import Controller.Dashboard
 import Database.PostgreSQL.Simple
 
 type LocadoraID = Integer
@@ -75,13 +75,24 @@ registraDevolucao conn locadoraId = do
                 _ -> do
                     putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
                     menuLocadora conn locadoraId
-        [(data_inicio, data_devolucao, id_carro)] -> do
-            printAluguel conn (data_inicio, data_devolucao, id_carro)
+        [(data_inicio, data_devolucao, id_carro, valor_total)] -> do
+            printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total)
             devolucao <- verificaDevolucao data_devolucao
             case (devolucao :: String) of
               "Devolução dentro do prazo" -> do
-                valor <- calculaValor numContrato
-                print valor
+                putStrLn "Realizar pagamento do aluguel! Valor total: "
+                print valor_total
+                putStrLn "1. Confirmar pagamento"
+                putStrLn "2. Cancelar"
+                confirmaPagamento <- getLine
+                case confirmaPagamento of
+                    "1" -> do
+                        putStrLn "Pagamento realizado com sucesso!"
+                        putStrLn "Aluguel finalizado."
+                        menuLocadora conn locadoraId
+                    "2" -> do
+                        putStrLn "Operação cancelada!"
+                        menuLocadora conn locadoraId
               "Devolução adiantada" -> do
                 putStrLn "Motivo da devolução adiantada:"
                 putStrLn "1. Problema no carro"
@@ -99,9 +110,9 @@ registraDevolucao conn locadoraId = do
                 print valor
 
 
-buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer)]
+buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer, Double)]
 buscarAluguel conn numContrato = do
-    alugueis <- query conn "SELECT data_inicio, data_devolucao, id_carro FROM Alugueis WHERE id_aluguel = ? AND status_aluguel = 'ativo'" (Only numContrato)
+    alugueis <- query conn "SELECT data_inicio, data_devolucao, id_carro, valor_total FROM Alugueis WHERE id_aluguel = ? AND status_aluguel = 'ativo'" (Only numContrato)
     return alugueis
 
 
@@ -110,17 +121,18 @@ buscarCarro conn id_carro = do
     putStrLn ""
     putStrLn $ "Detalhes do carro com ID '" ++ show id_carro ++ "':"
     carro <- query conn "SELECT marca, modelo, ano FROM Carros WHERE id_carro = ?" (Only id_carro)
-    
+
     if null carro
         then putStrLn $ "Carro com ID '" ++ show id_carro ++ "' não encontrado."
         else printCarroLocadora (head carro)
-    
 
-printAluguel :: Connection -> (Day, Day, Integer) -> IO ()
-printAluguel conn (data_inicio, data_devolucao, id_carro) = do
+
+printAluguel :: Connection -> (Day, Day, Integer, Double) -> IO ()
+printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total) = do
     putStrLn "Carro Alugado: "
     buscarCarro conn id_carro
     putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ ", Data de devolução: " ++ show data_devolucao
+    putStrLn ("Valor total do aluguel: " ++ show valor_total)
 
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
@@ -138,20 +150,17 @@ verificaDevolucao inputDate = do
             else return "Devolução atrasada"
 
 
-
-
 -- Funcões temporárias
 -- enviaParaMecanico :: Connection -> (String, String, Integer) -> Bool
 -- enviaParaMecanico conn id_carro id_aluguel = do
 
 enviaParaMecanico :: Connection -> Integer -> Integer -> IO Double
 enviaParaMecanico conn id_carro id_aluguel = do
-    let valorCalculado = 100.0 
-    
-    return valorCalculado
+    let valorCalculado = 100.0
 
+    return valorCalculado
 calculaValor ::  Integer -> IO Double
 calculaValor id_aluguel = do
-    let valorCalculado = 100.0 
-    
+    let valorCalculado = 100.0
+
     return valorCalculado
