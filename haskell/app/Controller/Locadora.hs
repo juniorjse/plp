@@ -79,20 +79,7 @@ registraDevolucao conn locadoraId = do
             printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total)
             devolucao <- verificaDevolucao data_devolucao
             case (devolucao :: String) of
-              "Devolução dentro do prazo" -> do
-                putStrLn "Realizar pagamento do aluguel! Valor total: "
-                print valor_total
-                putStrLn "1. Confirmar pagamento"
-                putStrLn "2. Cancelar"
-                confirmaPagamento <- getLine
-                case confirmaPagamento of
-                    "1" -> do
-                        putStrLn "Pagamento realizado com sucesso!"
-                        putStrLn "Aluguel finalizado."
-                        menuLocadora conn locadoraId
-                    "2" -> do
-                        putStrLn "Operação cancelada!"
-                        menuLocadora conn locadoraId
+              "Devolução dentro do prazo" -> devolucaoDentroDoPrazo conn locadoraId valor_total
               "Devolução adiantada" -> do
                 putStrLn "Motivo da devolução adiantada:"
                 putStrLn "1. Problema no carro"
@@ -148,6 +135,22 @@ verificaDevolucao inputDate = do
         else if inputDate < currentDay
             then return "Devolução adiantada"
             else return "Devolução atrasada"
+
+devolucaoDentroDoPrazo :: Connection -> LocadoraID -> Double -> IO ()
+devolucaoDentroDoPrazo conn locadoraId valor_total = do
+    putStrLn "Realizar pagamento do aluguel! Valor total: "
+    print valor_total
+    putStrLn "1. Confirmar pagamento"
+    putStrLn "2. Cancelar"
+    confirmaPagamento <- getLine
+    case confirmaPagamento of
+        "1" -> do
+            putStrLn "Pagamento realizado com sucesso!"
+            putStrLn "Aluguel finalizado."
+            menuLocadora conn locadoraId
+        "2" -> do
+            putStrLn "Operação cancelada!"
+            menuLocadora conn locadoraId
 
 
 -- Funcões temporárias
