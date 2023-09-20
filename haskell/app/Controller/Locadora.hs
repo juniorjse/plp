@@ -50,7 +50,7 @@ menuLocadora conn locadoraId = do
             registraDevolucao conn locadoraId
         "4" -> 
             listarAlugueisPorCliente conn locadoraId
-        "4" -> do
+        "5" -> do
             menuDashboard conn
         "0" -> return ()
         _ -> do
@@ -224,7 +224,6 @@ verificaClienteExistente conn clienteId = do
 obterAlugueisPorCliente :: Connection -> Integer -> LocadoraID -> IO [(String, String, Int, Day, Day, Double, String)]
 obterAlugueisPorCliente conn clienteId locadoraId = do
     query conn "SELECT c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN Carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = ?" (Only clienteId)
-            menuLocadora conn locadoraId
 
 registraDevolucao :: Connection -> LocadoraID -> IO ()
 registraDevolucao conn locadoraId = do
@@ -256,8 +255,7 @@ registraDevolucao conn locadoraId = do
                 motivo <- getLine
                 case motivo of
                     "1" -> do
-                        mecanico <- enviaParaMecanico conn id_carro numContrato
-                        print mecanico
+                        enviaParaMecanico conn id_carro
                     "2" -> do
                         valor <- calculaValor data_inicio data_devolucao valor_total
                         printDevolucao conn locadoraId valor id_carro
@@ -337,11 +335,6 @@ calculaValor data_inicio data_devolucao valor_total = do
             -- Calcula o valor total
             return $ diferencaDeDias * diaria
 
-
--- Funcões temporárias
-
-enviaParaMecanico :: Connection -> Integer -> Integer -> IO Double
-enviaParaMecanico conn id_carro id_aluguel = do
-    let valorCalculado = 100.0
-
-    return valorCalculado
+enviaParaMecanico :: Connection -> Integer -> IO ()
+enviaParaMecanico conn id_carro = do
+    void $ execute conn "UPDATE Carros SET status = 'R' WHERE id_carro = ?" (Only id_carro)
