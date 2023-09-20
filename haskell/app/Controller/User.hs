@@ -228,7 +228,9 @@ cancelarAluguel conn userId = do
     putStrLn "Aluguéis do usuário:"
 
     case alugueis of
-        [] -> putStrLn "Nenhum aluguel encontrado para este usuário."
+        [] -> do
+            putStrLn "Nenhum aluguel encontrado para este usuário."
+            menuCliente conn userId
         _ -> do
             putStrLn $ "ID do Aluguel | ID do Carro | Valor Total"
             putStrLn "--------------------------------------------"
