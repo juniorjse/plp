@@ -5,6 +5,7 @@ import Data.Time (Day)
 import Data.Time
 import Data.Time (getCurrentTime)
 import Data.Time.Format (formatTime, defaultTimeLocale)
+import Data.Time.Calendar
 import Controller.Mecanica
 import Control.Exception
 import Data.IORef
@@ -79,7 +80,7 @@ registraDevolucao conn locadoraId = do
             printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total)
             devolucao <- verificaDevolucao data_devolucao
             case (devolucao :: String) of
-              "Devolução dentro do prazo" -> devolucaoDentroDoPrazo conn locadoraId valor_total
+              "Devolução dentro do prazo" -> printDevolucao conn locadoraId valor_total
               "Devolução adiantada" -> do
                 putStrLn "Motivo da devolução adiantada:"
                 putStrLn "1. Problema no carro"
@@ -90,11 +91,11 @@ registraDevolucao conn locadoraId = do
                         mecanico <- enviaParaMecanico conn id_carro numContrato
                         print mecanico
                     "2" -> do
-                        valor <- calculaValor numContrato
-                        print valor
+                        valor <- calculaValor data_inicio data_devolucao valor_total
+                        printDevolucao conn locadoraId valor
               "Devolução atrasada" -> do
-                valor <- calculaValor numContrato
-                print valor
+                valor <- calculaValor data_inicio data_devolucao valor_total
+                printDevolucao conn locadoraId valor
 
 
 buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer, Double)]
@@ -136,10 +137,10 @@ verificaDevolucao inputDate = do
             then return "Devolução adiantada"
             else return "Devolução atrasada"
 
-devolucaoDentroDoPrazo :: Connection -> LocadoraID -> Double -> IO ()
-devolucaoDentroDoPrazo conn locadoraId valor_total = do
+printDevolucao :: Connection -> LocadoraID -> Double -> IO ()
+printDevolucao conn locadoraId valor = do
     putStrLn "Realizar pagamento do aluguel! Valor total: "
-    print valor_total
+    print valor
     putStrLn "1. Confirmar pagamento"
     putStrLn "2. Cancelar"
     confirmaPagamento <- getLine
@@ -152,18 +153,25 @@ devolucaoDentroDoPrazo conn locadoraId valor_total = do
             putStrLn "Operação cancelada!"
             menuLocadora conn locadoraId
 
+calculaValor :: Day -> Day -> Double -> IO Double
+calculaValor data_inicio data_devolucao valor_total = do
+    dataAtual <- getCurrentTime >>= return . utctDay
+    let qtdDiasAlugados = fromIntegral (diffDays data_inicio data_devolucao)
+    let diaria = valor_total / qtdDiasAlugados
+    
+    if qtdDiasAlugados <= 0
+        then return diaria
+        else do
+            let diferencaDeDias = fromIntegral (diffDays data_inicio dataAtual)
+
+            -- Calcula o valor total
+            return $ diferencaDeDias * diaria
+
 
 -- Funcões temporárias
--- enviaParaMecanico :: Connection -> (String, String, Integer) -> Bool
--- enviaParaMecanico conn id_carro id_aluguel = do
 
 enviaParaMecanico :: Connection -> Integer -> Integer -> IO Double
 enviaParaMecanico conn id_carro id_aluguel = do
-    let valorCalculado = 100.0
-
-    return valorCalculado
-calculaValor ::  Integer -> IO Double
-calculaValor id_aluguel = do
     let valorCalculado = 100.0
 
     return valorCalculado
