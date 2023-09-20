@@ -80,7 +80,7 @@ registraDevolucao conn locadoraId = do
             printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total)
             devolucao <- verificaDevolucao data_devolucao
             case (devolucao :: String) of
-              "Devolução dentro do prazo" -> printDevolucao conn locadoraId valor_total
+              "Devolução dentro do prazo" -> printDevolucao conn locadoraId valor_total id_carro
               "Devolução adiantada" -> do
                 putStrLn "Motivo da devolução adiantada:"
                 putStrLn "1. Problema no carro"
@@ -92,10 +92,10 @@ registraDevolucao conn locadoraId = do
                         print mecanico
                     "2" -> do
                         valor <- calculaValor data_inicio data_devolucao valor_total
-                        printDevolucao conn locadoraId valor
+                        printDevolucao conn locadoraId valor id_carro
               "Devolução atrasada" -> do
                 valor <- calculaValor data_inicio data_devolucao valor_total
-                printDevolucao conn locadoraId valor
+                printDevolucao conn locadoraId valor id_carro
 
 
 buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer, Double)]
@@ -137,8 +137,8 @@ verificaDevolucao inputDate = do
             then return "Devolução adiantada"
             else return "Devolução atrasada"
 
-printDevolucao :: Connection -> LocadoraID -> Double -> IO ()
-printDevolucao conn locadoraId valor = do
+printDevolucao :: Connection -> LocadoraID -> Double -> Integer -> IO ()
+printDevolucao conn locadoraId valor id_carro = do
     putStrLn "Realizar pagamento do aluguel! Valor total: "
     print valor
     putStrLn "1. Confirmar pagamento"
@@ -148,6 +148,8 @@ printDevolucao conn locadoraId valor = do
         "1" -> do
             putStrLn "Pagamento realizado com sucesso!"
             putStrLn "Aluguel finalizado."
+            execute conn "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only id_carro)
+            execute conn "UPDATE Carros SET status = 'D' WHERE id_carro = ?" (Only id_carro)
             menuLocadora conn locadoraId
         "2" -> do
             putStrLn "Operação cancelada!"
