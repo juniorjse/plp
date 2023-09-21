@@ -75,7 +75,7 @@ login conn email senha = do
             case maybeUserId of
                 Just userId ->
                     if tipo == "administrador"
-                        then menuLocadora conn
+                        then menuLocadora conn userId
                         else if tipo == "mecanico"
                             then menuMecanica conn
                             else menuCliente conn userId
@@ -228,7 +228,9 @@ cancelarAluguel conn userId = do
     putStrLn "Aluguéis do usuário:"
 
     case alugueis of
-        [] -> putStrLn "Nenhum aluguel encontrado para este usuário."
+        [] -> do
+            putStrLn "Nenhum aluguel encontrado para este usuário."
+            menuCliente conn userId
         _ -> do
             putStrLn $ "ID do Aluguel | ID do Carro | Valor Total"
             putStrLn "--------------------------------------------"
