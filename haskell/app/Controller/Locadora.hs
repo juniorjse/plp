@@ -171,15 +171,17 @@ removerCarro conn = do
 
             if carroDisponivel
                 then do
-                    putStrLn "Tem certeza de que deseja remover este carro? (Sim/Não)"
+                    putStrLn "Tem certeza de que deseja remover este carro?  \n 1.Sim \n 2.Não"
                     confirmacao <- getLine
 
                     case confirmacao of
-                        "Sim" -> do
+                        "1" -> do
                             removeCarroDoSistema conn carroId
                             putStrLn "Carro removido com sucesso!"
                             menuLocadora conn
-                        "Não" -> menuLocadora conn
+                        "2" -> do
+                            putStrLn "Remoção de carro cancelada!"
+                            menuLocadora conn
                         _ -> do
                             putStrLn "Opção inválida. Por favor, escolha novamente."
                             removerCarro conn
@@ -228,11 +230,11 @@ listarAlugueisPorCliente conn = do
 
 mostrarRegistroAluguel :: (String, String, Int, Day, Day, Double, String) -> IO ()
 mostrarRegistroAluguel (marca, modelo, ano, dataInicio, dataDevolucao, valor, status) = do
-    putStrLn $ "Carro: " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
-    putStrLn $ "Data de Início: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
-    putStrLn $ "Data de Devolução: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
-    putStrLn $ "Valor do Aluguel: $ " ++ show valor
-    putStrLn $ "Status do Aluguel: " ++ status
+    putStrLn $ "Carro:               " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
+    putStrLn $ "Data de Início:      " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
+    putStrLn $ "Data de Devolução:   " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
+    putStrLn $ "Valor do Aluguel:    R$ " ++ show valor
+    putStrLn $ "Status do Aluguel:   " ++ status
     putStrLn ""
 
 verificaClienteExistente :: Connection -> Integer -> IO Bool
@@ -296,7 +298,7 @@ buscarAluguel conn numContrato = do
 buscarCarro :: Connection -> Integer -> IO ()
 buscarCarro conn id_carro = do
     putStrLn ""
-    putStrLn $ "Detalhes do carro com ID '" ++ show id_carro ++ "':"
+    putStrLn $ "Detalhes do aluguel com ID '" ++ show id_carro ++ "':"
     carro <- query conn "SELECT marca, modelo, ano FROM Carros WHERE id_carro = ?" (Only id_carro)
 
     if null carro
@@ -308,12 +310,12 @@ printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total) = do
     putStrLn "Carro Alugado: "
     buscarCarro conn id_carro
     valor_final <- calculaValor conn data_inicio data_devolucao valor_total id_carro
-    putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ ", Data de devolução: " ++ show data_devolucao
-    putStrLn ("Valor total do aluguel: " ++ show valor_final)
+    putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ "\nData de devolução:         " ++ show data_devolucao
+    putStrLn ("Valor total do aluguel:    R$ " ++ show valor_final)
 
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
+    putStrLn $ "Carro:                     " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
 
 verificaDevolucao :: Day -> IO String
 verificaDevolucao inputDate = do
@@ -327,9 +329,9 @@ verificaDevolucao inputDate = do
 
 printDevolucao :: Connection -> Double -> Integer -> IO ()
 printDevolucao conn valor id_carro = do
-    putStrLn "Realizar pagamento do aluguel! Valor total: "
-    print valor
-    putStrLn "1. Confirmar pagamento"
+    putStrLn "\nRealizar pagamento do aluguel! Valor total: "
+    putStrLn $ "R$ " ++ show valor
+    putStrLn "\n1. Confirmar pagamento"
     putStrLn "2. Cancelar"
     confirmaPagamento <- getLine
     case confirmaPagamento of
