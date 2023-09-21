@@ -40,7 +40,7 @@ O projeto consiste em desenvolver um sistema de locadora de carros operado por t
      SSL mode: disable
      Port: 5433
      Password: plp123 
-
+5. Após isso, rode os inserts (que estão [nesse aquivo](inserts.sql)) no pgAdmin para povoar sua tabela. Parabéns, seu banco de dados está configurado!
 - **ATENÇÃO:** Porta e/ou senha diferentes das utilizadas na aplicação podem acarretar em problemas na execução. Ao instalar o PostgreSQL tenha certeza que as informações estão compatíveis com o projeto.
 
 #### ☀️ HASKELL:
