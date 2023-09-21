@@ -277,11 +277,14 @@ registraDevolucao conn = do
                         enviaParaMecanico conn id_carro
                         menuLocadora conn
                     "2" -> do
-                        valor <- calculaValor data_inicio data_devolucao valor_total
+                        valor <- calculaValor conn data_inicio data_devolucao valor_total id_carro
                         printDevolucao conn valor id_carro
                         menuLocadora conn
+                    _ -> do
+                        putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
+                        menuLocadora conn
               "Devolução atrasada" -> do
-                valor <- calculaValor data_inicio data_devolucao valor_total
+                valor <- calculaValor conn data_inicio data_devolucao valor_total id_carro
                 printDevolucao conn valor id_carro
                 menuLocadora conn
 
@@ -304,8 +307,9 @@ printAluguel :: Connection -> (Day, Day, Integer, Double) -> IO ()
 printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total) = do
     putStrLn "Carro Alugado: "
     buscarCarro conn id_carro
+    valor_final <- calculaValor conn data_inicio data_devolucao valor_total id_carro
     putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ ", Data de devolução: " ++ show data_devolucao
-    putStrLn ("Valor total do aluguel: " ++ show valor_total)
+    putStrLn ("Valor total do aluguel: " ++ show valor_final)
 
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
@@ -317,7 +321,7 @@ verificaDevolucao inputDate = do
 
     if inputDate == currentDay
         then return "Devolução dentro do prazo."
-        else if inputDate < currentDay
+        else if inputDate > currentDay
             then return "Devolução adiantada"
             else return "Devolução atrasada"
 
@@ -338,18 +342,24 @@ printDevolucao conn valor id_carro = do
         "2" -> do
             putStrLn "Operação cancelada!"
             menuLocadora conn
+        _ -> do
+            putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
+            menuLocadora conn
 
-calculaValor :: Day -> Day -> Double -> IO Double
-calculaValor data_inicio data_devolucao valor_total = do
+retornaDiaria :: Connection -> Integer -> IO Double
+retornaDiaria conn id_carro = do
+    [Only diariaFloat] <- query conn "SELECT diaria_carro FROM carros WHERE id_carro = ?" (Only id_carro)
+    let diariaDouble = diariaFloat :: Double
+    return diariaDouble
+
+calculaValor :: Connection -> Day -> Day -> Double -> Integer-> IO Double
+calculaValor conn data_inicio data_devolucao valor_total id_carro= do
     dataAtual <- getCurrentTime >>= return . utctDay
-    let qtdDiasAlugados = fromIntegral (diffDays data_inicio data_devolucao)
-    let diaria = valor_total / qtdDiasAlugados
+    let qtdDiasAlugados = fromIntegral (diffDays data_inicio dataAtual)
+    diaria <- retornaDiaria conn id_carro
     
-    if qtdDiasAlugados <= 0
-        then return diaria
-        else do
-            let diferencaDeDias = fromIntegral (diffDays data_inicio dataAtual)
-            return $ diferencaDeDias * diaria
+    return $ (-1*qtdDiasAlugados) * diaria
+    
 
 enviaParaMecanico :: Connection -> Integer -> IO ()
 enviaParaMecanico conn id_carro = do

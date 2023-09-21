@@ -171,7 +171,7 @@ menuCliente conn userId = do
             putStrLn "10. Elétrico"
 
             putStrLn ""
-            putStrLn "Escolha a categoria de carro desejada (1/2/3/4): "
+            putStrLn "Escolha a categoria de carro desejada (Exemplo: 3): "
             categoria <- getLine
 
             case categoria of
