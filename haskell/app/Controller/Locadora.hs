@@ -10,23 +10,12 @@ import Controller.Mecanica
 import Control.Exception
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import Controller.Dashboard
 import Database.PostgreSQL.Simple
 import Control.Monad (void)
+import Control.Monad (forM_)
 
-
-type LocadoraID = Integer
-
-locadoraIdRef :: IORef (Maybe LocadoraID)
-locadoraIdRef = unsafePerformIO $ do
-    newIORef Nothing
-{-# NOINLINE locadoraIdRef #-}
-
-data LocadoraExistenteException = LocadoraExistenteException
-    deriving (Show)
-
-menuLocadora :: Connection -> LocadoraID -> IO ()
-menuLocadora conn locadoraId = do
+menuLocadora :: Connection -> IO ()
+menuLocadora conn = do
     putStrLn ""
     putStrLn "Menu:"
     putStrLn "1. Cadastrar carro"
@@ -43,22 +32,52 @@ menuLocadora conn locadoraId = do
 
     case opcao of
         "1" -> do
-            registrarCarro conn locadoraId
+            registrarCarro conn
         "2" -> do
-            removerCarro conn locadoraId
+            removerCarro conn
         "3" -> do
-            registraDevolucao conn locadoraId
+            registraDevolucao conn
         "4" -> 
-            listarAlugueisPorCliente conn locadoraId
+            listarAlugueisPorCliente conn
         "5" -> do
             menuDashboard conn
         "0" -> return ()
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
-            menuLocadora conn locadoraId
+            menuLocadora conn
 
-registrarCarro :: Connection -> LocadoraID -> IO ()
-registrarCarro conn locadoraId = do
+menuDashboard :: Connection -> IO ()
+menuDashboard conn = do
+    putStrLn ""
+    putStrLn "Dashboard:"
+    putStrLn "1. Receita total"
+    putStrLn "2. Número de aluguéis"
+    putStrLn "3. Total de carros"
+    putStrLn "4. Carros mais defeituosos"
+    putStrLn "5. Aluguéis por categoria"
+    putStrLn "Escolha uma opção (ou digite qualquer outra coisa para voltar ao menu principal):"
+
+    opcao <- getLine
+
+    putStrLn ""
+
+    case opcao of
+        "1" -> exibirReceitaTotal conn
+        "2" -> exibirNumeroDeAlugueis conn
+        "3" -> exibirTotalDeCarros conn
+        "4" -> exibirCarrosMaisDefeituosos conn
+        "5" -> exibirAlugueisPorCategoria conn
+        _ -> do
+            putStrLn "Dígito inválido. Voltando ao menu principal."
+            menuLocadora conn
+
+getProximoIDCarro :: Connection -> IO Int
+getProximoIDCarro conn = do
+    [Only proximoID] <- query_ conn "SELECT COALESCE(MAX(id_carro), 0) + 1 FROM Carros"
+    return proximoID
+
+registrarCarro :: Connection -> IO ()
+registrarCarro conn = do
     putStrLn "Digite as informações do carro."
     putStrLn "Marca:"
     marca <- getLine
@@ -80,34 +99,39 @@ registrarCarro conn locadoraId = do
     if null modelo || null ano || null placa || null categoria
         then do
             putStrLn "Campos não podem ser nulos. Por favor, preencha todos os campos."
-            registrarCarro conn locadoraId
-    -- cancelou o cadastro:
-    else if not confirmacao 
+            registrarCarro conn
+    else if not confirmacao
         then do
             putStrLn "O cadastro foi cancelado."
-            menuLocadora conn locadoraId
-    -- verifica existencia do carro no bd:
-    else do 
-        carroExiste <- carroJaCadastrado conn placa 
-        if carroExiste 
-            then do
-                putStrLn "Esse carro já foi cadastrado no sistema. Tente novamente."
-                registrarCarro conn locadoraId
-            else do
-                execute conn "INSERT INTO Carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" (marca, modelo, ano, placa, categoria, 0.0 :: Double, "A" :: String, diaria, descricao)
-                putStrLn "Cadastro realizado com sucesso! Informações do carro cadastrado:"
-                putStrLn $ "Marca: \t" ++ marca
-                putStrLn $ "Modelo: \t" ++ modelo
-                putStrLn $ "Ano: \t" ++ ano
-                putStrLn $ "Placa: \t" ++ placa
-                putStrLn $ "Categoria: \t" ++ categoria
-                putStrLn $ "Diária: \t" ++ diaria
-                putStrLn $ "Descrição: \t" ++ descricao
-                novoCadastro conn locadoraId
+            menuLocadora conn
+            else do 
+                carroExiste <- carroJaCadastrado conn placa 
+                if carroExiste 
+                    then do
+                        putStrLn ""
+                        putStrLn "Esse carro já foi cadastrado no sistema. Tente novamente."
+                        putStrLn ""
+                        registrarCarro conn
+                else do
+                        -- Obtém o próximo ID disponível
+                    proximoID <- getProximoIDCarro conn
+    
+                    -- Insere o carro no banco de dados com o próximo ID
+                    execute conn "INSERT INTO Carros (id_carro, marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" (proximoID, marca, modelo, ano, placa, categoria, 0.0 :: Double, "A" :: String, diaria, descricao)
+                    putStrLn "Cadastro realizado com sucesso! Informações do carro cadastrado:"
+                    putStrLn $ "ID: \t" ++ show proximoID
+                    putStrLn $ "Marca: \t" ++ marca
+                    putStrLn $ "Modelo: \t" ++ modelo
+                    putStrLn $ "Ano: \t" ++ ano
+                    putStrLn $ "Placa: \t" ++ placa
+                    putStrLn $ "Categoria: \t" ++ categoria
+                    putStrLn $ "Diária: \t" ++ diaria
+                    putStrLn $ "Descrição: \t" ++ descricao
+                    novoCadastro conn
                 
 confirma :: Connection -> IO Bool
 confirma conn = do
-    putStrLn "Tem certeza que deseja cadastrar esse carro? \n 1. Sim \n 2.Não"
+    putStrLn "Tem certeza que deseja cadastrar esse carro? \n 1.Sim \n 2.Não"
     confirmacao <- getLine 
     if confirmacao /= "1" && confirmacao /= "2" 
         then do
@@ -117,26 +141,23 @@ confirma conn = do
         let count = if confirmacao == "1" then 1 else 0
         return (count /= (0 :: Int))
 
-novoCadastro :: Connection -> LocadoraID -> IO()
-novoCadastro conn locadoraId = do
-    putStrLn "\nDeseja cadastrar outro carro? \n 1. Sim \n 2.Não"
+novoCadastro :: Connection -> IO()
+novoCadastro conn = do
+    putStrLn "\nDeseja cadastrar outro carro? \n 1.Sim \n 2.Não"
     novoCadastro <- getLine
     case novoCadastro of
-        "1" -> registrarCarro conn locadoraId
-        "2" -> menuLocadora conn locadoraId
+        "1" -> registrarCarro conn
+        "2" -> menuLocadora conn
         _ -> do
             putStrLn "Opção inválida. Por favor, escolha novamente."
-
 
 carroJaCadastrado :: Connection -> String -> IO Bool
 carroJaCadastrado conn placa = do
     [Only count] <- query conn "SELECT COUNT(*) FROM carros WHERE placa = ?" (Only placa)
     return (count /= (0 :: Int))
 
-
--- Remove um carro do banco de dados
-removerCarro :: Connection -> LocadoraID -> IO ()
-removerCarro conn locadoraId = do
+removerCarro :: Connection -> IO ()
+removerCarro conn = do
     putStrLn "Informe o ID do carro que deseja remover:"
     carroIdStr <- getLine
     putStrLn ""
@@ -157,17 +178,17 @@ removerCarro conn locadoraId = do
                         "Sim" -> do
                             removeCarroDoSistema conn carroId
                             putStrLn "Carro removido com sucesso!"
-                            menuLocadora conn locadoraId
-                        "Não" -> menuLocadora conn locadoraId
+                            menuLocadora conn
+                        "Não" -> menuLocadora conn
                         _ -> do
                             putStrLn "Opção inválida. Por favor, escolha novamente."
-                            removerCarro conn locadoraId
+                            removerCarro conn
                 else do
                     putStrLn "Este carro está atualmente alugado (status 'O') e não pode ser removido."
-                    menuLocadora conn locadoraId
+                    menuLocadora conn
         else do
             putStrLn "ID de carro inválido ou inexistente. Tente novamente."
-            removerCarro conn locadoraId
+            removerCarro conn
 
 removeCarroDoSistema :: Connection -> Integer -> IO ()
 removeCarroDoSistema conn carroId = do
@@ -183,10 +204,8 @@ verificaCarroDisponivel conn carroId = do
     [Only status] <- query conn "SELECT status FROM Carros WHERE id_carro = ?" (Only carroId)
     return (status == ("D" :: String))
 
-
--- Registros de Aluguéis por Cliente
-listarAlugueisPorCliente :: Connection -> LocadoraID -> IO ()
-listarAlugueisPorCliente conn locadoraId = do
+listarAlugueisPorCliente :: Connection -> IO ()
+listarAlugueisPorCliente conn = do
     putStrLn "Digite o ID do cliente para listar os registros de aluguéis:"
     clienteIdStr <- getLine
     putStrLn ""
@@ -196,7 +215,7 @@ listarAlugueisPorCliente conn locadoraId = do
 
     if clienteExiste
         then do
-            alugueis <- obterAlugueisPorCliente conn clienteId locadoraId
+            alugueis <- obterAlugueisPorCliente conn clienteId
             if null alugueis
                 then do
                     putStrLn "Não há registros de aluguéis para este cliente."
@@ -205,7 +224,7 @@ listarAlugueisPorCliente conn locadoraId = do
                     mapM_ (mostrarRegistroAluguel) alugueis
         else do
             putStrLn "Cliente não encontrado na base de dados."
-    menuLocadora conn locadoraId
+    menuLocadora conn
 
 mostrarRegistroAluguel :: (String, String, Int, Day, Day, Double, String) -> IO ()
 mostrarRegistroAluguel (marca, modelo, ano, dataInicio, dataDevolucao, valor, status) = do
@@ -221,12 +240,12 @@ verificaClienteExistente conn clienteId = do
     [Only count] <- query conn "SELECT COUNT(*) FROM Usuarios WHERE id_usuario = ?" (Only clienteId)
     return (count > (0 :: Int))
 
-obterAlugueisPorCliente :: Connection -> Integer -> LocadoraID -> IO [(String, String, Int, Day, Day, Double, String)]
-obterAlugueisPorCliente conn clienteId locadoraId = do
+obterAlugueisPorCliente :: Connection -> Integer -> IO [(String, String, Int, Day, Day, Double, String)]
+obterAlugueisPorCliente conn clienteId = do
     query conn "SELECT c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN Carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = ?" (Only clienteId)
 
-registraDevolucao :: Connection -> LocadoraID -> IO ()
-registraDevolucao conn locadoraId = do
+registraDevolucao :: Connection -> IO ()
+registraDevolucao conn = do
     putStrLn "Digite o número do contrato/ Id do aluguel a ser encerrado:"
     numContratoStr <- getLine
     let numContrato = read numContratoStr :: Integer
@@ -238,16 +257,16 @@ registraDevolucao conn locadoraId = do
             putStrLn "2. Para voltar ao menu inicial"
             opcao <- getLine
             case opcao of
-                "1" -> registraDevolucao conn locadoraId
-                "2" -> menuLocadora conn locadoraId
+                "1" -> registraDevolucao conn
+                "2" -> menuLocadora conn
                 _ -> do
                     putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
-                    menuLocadora conn locadoraId
+                    menuLocadora conn
         [(data_inicio, data_devolucao, id_carro, valor_total)] -> do
             printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total)
             devolucao <- verificaDevolucao data_devolucao
             case (devolucao :: String) of
-              "Devolução dentro do prazo" -> printDevolucao conn locadoraId valor_total id_carro
+              "Devolução dentro do prazo" -> printDevolucao conn valor_total id_carro
               "Devolução adiantada" -> do
                 putStrLn "Motivo da devolução adiantada:"
                 putStrLn "1. Problema no carro"
@@ -256,19 +275,20 @@ registraDevolucao conn locadoraId = do
                 case motivo of
                     "1" -> do
                         enviaParaMecanico conn id_carro
+                        menuLocadora conn
                     "2" -> do
                         valor <- calculaValor data_inicio data_devolucao valor_total
-                        printDevolucao conn locadoraId valor id_carro
+                        printDevolucao conn valor id_carro
+                        menuLocadora conn
               "Devolução atrasada" -> do
                 valor <- calculaValor data_inicio data_devolucao valor_total
-                printDevolucao conn locadoraId valor id_carro
-
+                printDevolucao conn valor id_carro
+                menuLocadora conn
 
 buscarAluguel :: Connection -> Integer -> IO [(Day, Day, Integer, Double)]
 buscarAluguel conn numContrato = do
     alugueis <- query conn "SELECT data_inicio, data_devolucao, id_carro, valor_total FROM Alugueis WHERE id_aluguel = ? AND status_aluguel = 'ativo'" (Only numContrato)
     return alugueis
-
 
 buscarCarro :: Connection -> Integer -> IO ()
 buscarCarro conn id_carro = do
@@ -279,7 +299,6 @@ buscarCarro conn id_carro = do
     if null carro
         then putStrLn $ "Carro com ID '" ++ show id_carro ++ "' não encontrado."
         else printCarroLocadora (head carro)
-
 
 printAluguel :: Connection -> (Day, Day, Integer, Double) -> IO ()
 printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total) = do
@@ -294,7 +313,6 @@ printCarroLocadora (marca, modelo, ano) = do
 
 verificaDevolucao :: Day -> IO String
 verificaDevolucao inputDate = do
-    -- Obtém a data atual
     currentDay <- getCurrentTime >>= return . utctDay
 
     if inputDate == currentDay
@@ -303,8 +321,8 @@ verificaDevolucao inputDate = do
             then return "Devolução adiantada"
             else return "Devolução atrasada"
 
-printDevolucao :: Connection -> LocadoraID -> Double -> Integer -> IO ()
-printDevolucao conn locadoraId valor id_carro = do
+printDevolucao :: Connection -> Double -> Integer -> IO ()
+printDevolucao conn valor id_carro = do
     putStrLn "Realizar pagamento do aluguel! Valor total: "
     print valor
     putStrLn "1. Confirmar pagamento"
@@ -316,10 +334,10 @@ printDevolucao conn locadoraId valor id_carro = do
             putStrLn "Aluguel finalizado."
             execute conn "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = ? AND status_aluguel = 'ativo'" (Only id_carro)
             execute conn "UPDATE Carros SET status = 'D' WHERE id_carro = ?" (Only id_carro)
-            menuLocadora conn locadoraId
+            menuLocadora conn
         "2" -> do
             putStrLn "Operação cancelada!"
-            menuLocadora conn locadoraId
+            menuLocadora conn
 
 calculaValor :: Day -> Day -> Double -> IO Double
 calculaValor data_inicio data_devolucao valor_total = do
@@ -331,10 +349,62 @@ calculaValor data_inicio data_devolucao valor_total = do
         then return diaria
         else do
             let diferencaDeDias = fromIntegral (diffDays data_inicio dataAtual)
-
-            -- Calcula o valor total
             return $ diferencaDeDias * diaria
 
 enviaParaMecanico :: Connection -> Integer -> IO ()
 enviaParaMecanico conn id_carro = do
     void $ execute conn "UPDATE Carros SET status = 'R' WHERE id_carro = ?" (Only id_carro)
+
+calcularReceitaTotal :: Connection -> IO Double
+calcularReceitaTotal conn = do
+    [Only total] <- query_ conn "SELECT SUM(valor_total) FROM Alugueis"
+    return total
+
+contarAlugueis :: Connection -> IO Int
+contarAlugueis conn = do
+    [Only count] <- query_ conn "SELECT COUNT(*) FROM Alugueis"
+    return count
+
+contarCarros :: Connection -> IO Int
+contarCarros conn = do
+    [Only count] <- query_ conn "SELECT COUNT(*) FROM Carros"
+    return count
+
+listarCarrosMaisDefeituosos :: Connection -> IO [(String, String)]
+listarCarrosMaisDefeituosos conn = do
+    query_ conn "SELECT marca, modelo FROM Carros WHERE status = 'R'"
+
+listarAlugueisPorCategoria :: Connection -> IO [(String, Int)]
+listarAlugueisPorCategoria conn = do
+    query_ conn "SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria"
+
+exibirReceitaTotal :: Connection -> IO ()
+exibirReceitaTotal conn = do
+    totalReceita <- calcularReceitaTotal conn
+    putStrLn $ "Receita Total: " ++ show totalReceita
+    menuDashboard conn
+exibirNumeroDeAlugueis :: Connection -> IO ()
+exibirNumeroDeAlugueis conn = do
+    numeroAlugueis <- contarAlugueis conn
+    putStrLn $ "Número de Aluguéis: " ++ show numeroAlugueis
+    menuDashboard conn
+
+exibirTotalDeCarros :: Connection -> IO ()
+exibirTotalDeCarros conn = do
+    totalCarros <- contarCarros conn
+    putStrLn $ "Total de Carros: " ++ show totalCarros
+    menuDashboard conn
+
+exibirCarrosMaisDefeituosos :: Connection -> IO ()
+exibirCarrosMaisDefeituosos conn = do
+    carrosDefeituosos <- listarCarrosMaisDefeituosos conn
+    putStrLn "Carros mais defeituosos:"
+    forM_ carrosDefeituosos (\(marca, modelo) -> putStrLn $ marca ++ " " ++ modelo)
+    menuDashboard conn
+
+exibirAlugueisPorCategoria :: Connection -> IO ()
+exibirAlugueisPorCategoria conn = do
+    alugueisPorCategoria <- listarAlugueisPorCategoria conn
+    putStrLn "Aluguéis por Categoria:"
+    forM_ alugueisPorCategoria (\(categoria, quantidade) -> putStrLn $ categoria ++ ": " ++ show quantidade)
+    menuDashboard conn

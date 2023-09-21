@@ -75,7 +75,7 @@ login conn email senha = do
             case maybeUserId of
                 Just userId ->
                     if tipo == "administrador"
-                        then menuLocadora conn userId
+                        then menuLocadora conn
                         else if tipo == "mecanico"
                             then menuMecanica conn
                             else menuCliente conn userId
@@ -163,6 +163,13 @@ menuCliente conn userId = do
             putStrLn "2. Intermediário"
             putStrLn "3. SUV"
             putStrLn "4. Luxo"
+            putStrLn "5. Minivan"
+            putStrLn "6. Sedan"
+            putStrLn "7. Conversível"
+            putStrLn "8. Esportivo"
+            putStrLn "9. Pickup"
+            putStrLn "10. Elétrico"
+
             putStrLn ""
             putStrLn "Escolha a categoria de carro desejada (1/2/3/4): "
             categoria <- getLine
@@ -196,7 +203,7 @@ realizarAluguel :: Connection -> UserID -> String -> IO ()
 realizarAluguel conn userId carroId = do
     putStrLn "Dias de aluguel do carro:"
     dias_aluguel_str <- getLine
-    let dias_aluguel = read dias_aluguel_str :: Double -- Lê os dias como Double
+    let dias_aluguel = read dias_aluguel_str :: Double
 
     carros <- query conn "SELECT marca, modelo, placa, diaria_carro FROM carros WHERE id_carro = ?" (Only carroId)
 
@@ -204,11 +211,11 @@ realizarAluguel conn userId carroId = do
         [] -> putStrLn "Carro não encontrado."
         [(marca, modelo, placa, diaria_carro)] -> do
             putStrLn $ marca ++ ", " ++ modelo ++ " - " ++ placa
-            let valor_total = diaria_carro * dias_aluguel -- Agora a multiplicação é direta
+            let valor_total = diaria_carro * dias_aluguel
             putStrLn $ "Valor total: " ++ show valor_total
             putStrLn ""
             putStrLn "Deseja confirmar o aluguel desse carro?"
-            putStrLn " 1. Sim \n 2.Não"
+            putStrLn " 1. Sim \n 2. Não"
             confirma <- getLine
             case confirma of
                 "1" -> do
@@ -241,17 +248,15 @@ cancelarAluguel conn userId = do
             aluguelIdStr <- getLine
             let aluguelId = read aluguelIdStr :: Integer
 
-            -- Chama a função verificaTempoAluguel para verificar se o aluguel pode ser cancelado.
             tempo <- verificaTempoAluguel conn (fromInteger aluguelId)
 
-            -- Agora, com base no valor de tempo, decidimos se o aluguel pode ser cancelado ou não
             if tempo == 0
                 then do
                     clearScreenOnly
                     putStrLn "Aluguel possível de ser cancelado."
                     putStrLn ""
                     putStrLn "Deseja confirmar o cancelamento desse aluguel?"
-                    putStrLn " 1. Sim \n 2.Não"
+                    putStrLn " 1. Sim \n 2. Não"
                     confirma <- getLine
                     case confirma of
                         "1" -> do
@@ -268,7 +273,6 @@ cancelarAluguel conn userId = do
                     putStrLn "Aluguel não é possível ser cancelado, pois faz mais de um dia que o aluguel foi iniciado."
                     putStrLn ""
 
-            -- Retornar ao menu de cliente ou executar outras ações, se necessário
             menuCliente conn userId
 
 buscarAlugueisPorUsuario :: Connection -> Integer -> IO [(Integer, Integer, Double)]
@@ -287,18 +291,18 @@ verificaTempoAluguel conn aluguelId = do
 listarCarrosPorCategoria :: Connection -> String -> IO ()
 listarCarrosPorCategoria conn categoria = do
     putStrLn $ "Carros disponíveis na categoria '" ++ categoria ++ "':"
-    carros <- query conn "SELECT marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria] :: IO [(T.Text, T.Text, Integer)]
+    carros <- query conn "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'" [categoria] :: IO [(Integer, T.Text, T.Text, Integer)]
     
     if Prelude.null carros
         then putStrLn $ "Não há carros disponíveis na categoria '" ++ categoria ++ "'"
         else do
-            let carrosComAnoInteger :: [(T.Text, T.Text, Integer)]
+            let carrosComAnoInteger :: [(Integer, T.Text, T.Text, Integer)]
                 carrosComAnoInteger = carros
-            mapM_ (\(marca, modelo, ano) -> putStrLn $ T.unpack marca ++ " | " ++ T.unpack modelo ++ " | " ++ show ano) carrosComAnoInteger
+            mapM_ (\(id_carro, marca, modelo, ano) -> putStrLn $ T.unpack marca ++ " | " ++ T.unpack modelo ++ " | " ++ show ano) carrosComAnoInteger
 
-printCarro :: (String, String, Int) -> IO ()
-printCarro (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano    
+printCarro :: (Int, String, String, Int) -> IO ()
+printCarro (id_carro, marca, modelo, ano) = do
+    putStrLn $ "ID_Carro: "++ show id_carro ++ ", Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano    
 
 mostrarRanking :: Connection -> Integer -> IO ()
 mostrarRanking conn userId = do
