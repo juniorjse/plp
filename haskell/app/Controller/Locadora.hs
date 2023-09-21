@@ -119,14 +119,14 @@ registrarCarro conn = do
                     -- Insere o carro no banco de dados com o próximo ID
                     execute conn "INSERT INTO Carros (id_carro, marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" (proximoID, marca, modelo, ano, placa, categoria, 0.0 :: Double, "A" :: String, diaria, descricao)
                     putStrLn "Cadastro realizado com sucesso! Informações do carro cadastrado:"
-                    putStrLn $ "ID: \t" ++ show proximoID
-                    putStrLn $ "Marca: \t" ++ marca
-                    putStrLn $ "Modelo: \t" ++ modelo
-                    putStrLn $ "Ano: \t" ++ ano
-                    putStrLn $ "Placa: \t" ++ placa
-                    putStrLn $ "Categoria: \t" ++ categoria
-                    putStrLn $ "Diária: \t" ++ diaria
-                    putStrLn $ "Descrição: \t" ++ descricao
+                    putStrLn $ "ID:         " ++ show proximoID
+                    putStrLn $ "Marca:      " ++ marca
+                    putStrLn $ "Modelo:     " ++ modelo
+                    putStrLn $ "Ano:        " ++ ano
+                    putStrLn $ "Placa:      " ++ placa
+                    putStrLn $ "Categoria:  " ++ categoria
+                    putStrLn $ "Diária:     " ++ diaria
+                    putStrLn $ "Descrição:  " ++ descricao
                     novoCadastro conn
                 
 confirma :: Connection -> IO Bool
@@ -171,15 +171,17 @@ removerCarro conn = do
 
             if carroDisponivel
                 then do
-                    putStrLn "Tem certeza de que deseja remover este carro? (Sim/Não)"
+                    putStrLn "Tem certeza de que deseja remover este carro?  \n 1.Sim \n 2.Não"
                     confirmacao <- getLine
 
                     case confirmacao of
-                        "Sim" -> do
+                        "1" -> do
                             removeCarroDoSistema conn carroId
                             putStrLn "Carro removido com sucesso!"
                             menuLocadora conn
-                        "Não" -> menuLocadora conn
+                        "2" -> do
+                            putStrLn "Remoção de carro cancelada!"
+                            menuLocadora conn
                         _ -> do
                             putStrLn "Opção inválida. Por favor, escolha novamente."
                             removerCarro conn
@@ -228,11 +230,11 @@ listarAlugueisPorCliente conn = do
 
 mostrarRegistroAluguel :: (String, String, Int, Day, Day, Double, String) -> IO ()
 mostrarRegistroAluguel (marca, modelo, ano, dataInicio, dataDevolucao, valor, status) = do
-    putStrLn $ "Carro: " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
-    putStrLn $ "Data de Início: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
-    putStrLn $ "Data de Devolução: " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
-    putStrLn $ "Valor do Aluguel: $ " ++ show valor
-    putStrLn $ "Status do Aluguel: " ++ status
+    putStrLn $ "Carro:               " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
+    putStrLn $ "Data de Início:      " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataInicio
+    putStrLn $ "Data de Devolução:   " ++ formatTime defaultTimeLocale "%Y-%m-%d" dataDevolucao
+    putStrLn $ "Valor do Aluguel:    R$ " ++ show valor
+    putStrLn $ "Status do Aluguel:   " ++ status
     putStrLn ""
 
 verificaClienteExistente :: Connection -> Integer -> IO Bool
@@ -277,11 +279,14 @@ registraDevolucao conn = do
                         enviaParaMecanico conn id_carro
                         menuLocadora conn
                     "2" -> do
-                        valor <- calculaValor data_inicio data_devolucao valor_total
+                        valor <- calculaValor conn data_inicio data_devolucao valor_total id_carro
                         printDevolucao conn valor id_carro
                         menuLocadora conn
+                    _ -> do
+                        putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
+                        menuLocadora conn
               "Devolução atrasada" -> do
-                valor <- calculaValor data_inicio data_devolucao valor_total
+                valor <- calculaValor conn data_inicio data_devolucao valor_total id_carro
                 printDevolucao conn valor id_carro
                 menuLocadora conn
 
@@ -293,7 +298,7 @@ buscarAluguel conn numContrato = do
 buscarCarro :: Connection -> Integer -> IO ()
 buscarCarro conn id_carro = do
     putStrLn ""
-    putStrLn $ "Detalhes do carro com ID '" ++ show id_carro ++ "':"
+    putStrLn $ "Detalhes do aluguel com ID '" ++ show id_carro ++ "':"
     carro <- query conn "SELECT marca, modelo, ano FROM Carros WHERE id_carro = ?" (Only id_carro)
 
     if null carro
@@ -304,12 +309,13 @@ printAluguel :: Connection -> (Day, Day, Integer, Double) -> IO ()
 printAluguel conn (data_inicio, data_devolucao, id_carro, valor_total) = do
     putStrLn "Carro Alugado: "
     buscarCarro conn id_carro
-    putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ ", Data de devolução: " ++ show data_devolucao
-    putStrLn ("Valor total do aluguel: " ++ show valor_total)
+    valor_final <- calculaValor conn data_inicio data_devolucao valor_total id_carro
+    putStrLn $ "Data de início do aluguel: " ++ show data_inicio ++ "\nData de devolução:         " ++ show data_devolucao
+    putStrLn ("Valor total do aluguel:    R$ " ++ show valor_final)
 
 printCarroLocadora :: (String, String, Int) -> IO ()
 printCarroLocadora (marca, modelo, ano) = do
-    putStrLn $ "Marca: " ++ marca ++ ", Modelo: " ++ modelo ++ ", Ano: " ++ show ano
+    putStrLn $ "Carro:                     " ++ marca ++ " " ++ modelo ++ " (" ++ show ano ++ ")"
 
 verificaDevolucao :: Day -> IO String
 verificaDevolucao inputDate = do
@@ -317,15 +323,15 @@ verificaDevolucao inputDate = do
 
     if inputDate == currentDay
         then return "Devolução dentro do prazo."
-        else if inputDate < currentDay
+        else if inputDate > currentDay
             then return "Devolução adiantada"
             else return "Devolução atrasada"
 
 printDevolucao :: Connection -> Double -> Integer -> IO ()
 printDevolucao conn valor id_carro = do
-    putStrLn "Realizar pagamento do aluguel! Valor total: "
-    print valor
-    putStrLn "1. Confirmar pagamento"
+    putStrLn "\nRealizar pagamento do aluguel! Valor total: "
+    putStrLn $ "R$ " ++ show valor
+    putStrLn "\n1. Confirmar pagamento"
     putStrLn "2. Cancelar"
     confirmaPagamento <- getLine
     case confirmaPagamento of
@@ -338,18 +344,24 @@ printDevolucao conn valor id_carro = do
         "2" -> do
             putStrLn "Operação cancelada!"
             menuLocadora conn
+        _ -> do
+            putStrLn "Opção inválida. Você será direcionado(a) ao menu inicial."
+            menuLocadora conn
 
-calculaValor :: Day -> Day -> Double -> IO Double
-calculaValor data_inicio data_devolucao valor_total = do
+retornaDiaria :: Connection -> Integer -> IO Double
+retornaDiaria conn id_carro = do
+    [Only diariaFloat] <- query conn "SELECT diaria_carro FROM carros WHERE id_carro = ?" (Only id_carro)
+    let diariaDouble = diariaFloat :: Double
+    return diariaDouble
+
+calculaValor :: Connection -> Day -> Day -> Double -> Integer-> IO Double
+calculaValor conn data_inicio data_devolucao valor_total id_carro= do
     dataAtual <- getCurrentTime >>= return . utctDay
-    let qtdDiasAlugados = fromIntegral (diffDays data_inicio data_devolucao)
-    let diaria = valor_total / qtdDiasAlugados
+    let qtdDiasAlugados = fromIntegral (diffDays data_inicio dataAtual)
+    diaria <- retornaDiaria conn id_carro
     
-    if qtdDiasAlugados <= 0
-        then return diaria
-        else do
-            let diferencaDeDias = fromIntegral (diffDays data_inicio dataAtual)
-            return $ diferencaDeDias * diaria
+    return $ (-1*qtdDiasAlugados) * diaria
+    
 
 enviaParaMecanico :: Connection -> Integer -> IO ()
 enviaParaMecanico conn id_carro = do

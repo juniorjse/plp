@@ -53,7 +53,6 @@ createAlugueis conn = do
                 \data_devolucao DATE NOT NULL,\
                 \valor_total DOUBLE PRECISION NOT NULL,\
                 \status_aluguel VARCHAR(100) NOT NULL,\
-                \FOREIGN KEY (id_carro) REFERENCES Carros (id_carro),\
                 \FOREIGN KEY (id_usuario) REFERENCES Usuarios (id_usuario));"
   return ()
 
