@@ -298,7 +298,7 @@ listarCarrosPorCategoria conn categoria = do
         else do
             let carrosComAnoInteger :: [(Integer, T.Text, T.Text, Integer)]
                 carrosComAnoInteger = carros
-            mapM_ (\(id_carro, marca, modelo, ano) -> putStrLn $ T.unpack marca ++ " | " ++ T.unpack modelo ++ " | " ++ show ano) carrosComAnoInteger
+            mapM_ (\(id_carro, marca, modelo, ano) -> putStrLn $ "ID: " ++ show id_carro ++ " | Marca: " ++ T.unpack marca ++ " | Modelo: " ++ T.unpack modelo ++ " | Ano: " ++ show ano) carrosComAnoInteger
 
 printCarro :: (Int, String, String, Int) -> IO ()
 printCarro (id_carro, marca, modelo, ano) = do
