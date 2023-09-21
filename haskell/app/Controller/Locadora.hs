@@ -119,14 +119,14 @@ registrarCarro conn = do
                     -- Insere o carro no banco de dados com o próximo ID
                     execute conn "INSERT INTO Carros (id_carro, marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" (proximoID, marca, modelo, ano, placa, categoria, 0.0 :: Double, "A" :: String, diaria, descricao)
                     putStrLn "Cadastro realizado com sucesso! Informações do carro cadastrado:"
-                    putStrLn $ "ID: \t" ++ show proximoID
-                    putStrLn $ "Marca: \t" ++ marca
-                    putStrLn $ "Modelo: \t" ++ modelo
-                    putStrLn $ "Ano: \t" ++ ano
-                    putStrLn $ "Placa: \t" ++ placa
-                    putStrLn $ "Categoria: \t" ++ categoria
-                    putStrLn $ "Diária: \t" ++ diaria
-                    putStrLn $ "Descrição: \t" ++ descricao
+                    putStrLn $ "ID:         " ++ show proximoID
+                    putStrLn $ "Marca:      " ++ marca
+                    putStrLn $ "Modelo:     " ++ modelo
+                    putStrLn $ "Ano:        " ++ ano
+                    putStrLn $ "Placa:      " ++ placa
+                    putStrLn $ "Categoria:  " ++ categoria
+                    putStrLn $ "Diária:     " ++ diaria
+                    putStrLn $ "Descrição:  " ++ descricao
                     novoCadastro conn
                 
 confirma :: Connection -> IO Bool
