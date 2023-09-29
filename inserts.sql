@@ -5,7 +5,7 @@ VALUES
     (3, 'Jeep', 'Compass', 2019, 'EFG1234', 'SUV', 25000, 'O', 200.0, 'Um SUV espaçoso e versátil para aventuras.'),
     (4, 'Ford', 'Ka', 2022, 'JKL2345', 'Econômico', 8000, 'O', 90.0, 'Ótimo consumo de combustível e fácil de manobrar.'),
     (5, 'Renault', 'Kwid', 2021, 'MNO6789', 'Econômico', 12000, 'R', 85.0, 'Compacto e econômico para viagens urbanas.'),
-    (6, 'Chevrolet', 'Cruze', 2018, 'PQR1234', 'Intermediário', 40000, 'D', 180.0, 'Um sedan intermediário com conforto e tecnologia.'),
+    (6, 'Chevrolet', 'Cruze', 2018, 'PQR1234', 'Intermediário', 40000, 'O', 180.0, 'Um sedan intermediário com conforto e tecnologia.'),
     (7, 'Porsche', '911', 2022, 'EFG6789', 'Esportivo', 12000, 'D', 500.0, 'Um icônico esportivo com desempenho excepcional.'),
     (8, 'Honda', 'Civic', 2019, 'VWX9101', 'Intermediário', 35000, 'D', 170.0, 'Confiável e eficiente, ótimo para viagens.'),
     (9, 'Hyundai', 'HB20S', 2022, 'YZA2345', 'Sedan', 10000, 'D', 150.0, 'Um sedan compacto com visual moderno.'),
