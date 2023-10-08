@@ -1,4 +1,4 @@
-:- module(user_operations, [createUser/6, getUserByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4]).
+:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -18,6 +18,10 @@ createUser(Connection, Email, Senha, Nome, Sobrenome, Confirmacao):-
 getUserByEmail(Connection, Email, User):-
     Q = "SELECT * FROM usuarios WHERE email = '%w'",
     db_parameterized_query(Connection, Q, [Email], User).
+
+getTipoByEmail(Connection, Email, Tipo):-
+    Q = "SELECT tipo FROM usuarios WHERE email = '%w'",
+    db_parameterized_query(Connection, Q, [Email], Tipo).
 
 getUser(Connection, Email, Senha, User) :-
     Q = "SELECT * FROM usuarios WHERE email = '%w' and senha = '%w'",

@@ -1,8 +1,10 @@
-:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4]).
+:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4, menuCliente/0]).
 :- use_module(library(odbc)).
 :- use_module('./localdb/connectiondb').
 :- use_module('./localdb/dbop').
 :- use_module('./localdb/user_operations').
+:- use_module('./Locadora').
+:- use_module('./Mecanica').
 
 menu :-
     writeln(''),
@@ -25,13 +27,12 @@ escolherOpcao("0") :-
     writeln(''),
     halt.
 
-
 escolherOpcao(_) :-
-    writeln('Opção inválida. Por favor, escolha novamente.'),
+    writeln('Opção inválida. Por favor, escolha novamenteeeeee.'),
     menu.
 
 login :-
-    connectiondb:iniciandoDatabase(Connection),
+    iniciandoDatabase(Connection),
     writeln(''),
     writeln('Digite o seu e-mail:'),
     read_line_to_string(user_input, Email),
@@ -39,14 +40,21 @@ login :-
     read_line_to_string(user_input, Senha),
     authenticate(Connection, Email, Senha, Autenticado),
     ( Autenticado =:= 1 ->
-        getUser(Connection, Email, Senha, User),
-        writeln('Login bem sucessido!'),
-        menu;
+        writeln('Login bem-sucedido!'),
+        menuCliente
+    ;
         writeln(''),
-        writeln('E-mail ou senha inválidos!'),
-        menu
+        writeln('E-mail ou senha inválidos!')
     ).
 
+redirecionarMenu("administrador") :-
+    menuLocadora.
+
+redirecionarMenu("mecanico") :-
+    menuMecanico.
+
+redirecionarMenu("cliente") :-
+    menuCliente.
 
 authenticate(Connection, Email, Senha, Autenticado) :-
     getUser(Connection, Email, Senha, User),
@@ -54,6 +62,19 @@ authenticate(Connection, Email, Senha, Autenticado) :-
         Autenticado is 0 ; % Usuário não encontrado
         Autenticado is 1 % Senha correta
     ).
+
+menuCliente :-
+    writeln(''),
+    writeln('Menu do Cliente:'),
+    writeln('1. Listar carros por categoria'),
+    writeln('2. Realizar aluguel'),
+    writeln('3. Cancelar aluguel'),
+    writeln('4. Ranking de Carros Mais Alugados'),
+    writeln('Escolha uma opção:'),
+
+    read_line_to_string(user_input, Opcao), % Leitura da opção do cliente aqui.
+
+    writeln('').
 
 solicitarCadastro :-
     writeln(''),
@@ -96,7 +117,6 @@ solicitarCadastro :-
             )
         )
     ).
-
 
 createUser(Email, Senha, Nome, Sobrenome, Confirmacao) :-
     connectiondb:iniciandoDatabase(Connection),
