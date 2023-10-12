@@ -125,8 +125,9 @@ createUser(Email, Senha, Nome, Sobrenome, Confirmacao) :-
     userAlreadyExists(Connection, Email, Fstconf),
     (
         Fstconf =:= 0 ->
+            string_chars(SenhaString, Senha), % Converte a lista de caracteres em string
             format(string(Query), "INSERT INTO usuarios (nome, sobrenome, email, senha) VALUES ('~w', '~w', '~w', '~w')",
-                [Nome, Sobrenome, Email, Senha]),
+                [Nome, Sobrenome, Email, SenhaString]), % Use SenhaString na consulta
             dbop:db_query_no_return(Connection, Query),
             Confirmacao is 1
         ;
