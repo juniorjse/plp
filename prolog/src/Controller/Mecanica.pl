@@ -1,4 +1,4 @@
-:- module(user_operations, [menuMecanica/0]).
+:- module(Mecanica, [menuMecanica/0]).
 :- use_module(library(odbc)).
 :- use_module(util).
 :- use_module(dbop).

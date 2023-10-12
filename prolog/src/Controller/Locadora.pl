@@ -1,4 +1,4 @@
-:- module(user_operations, [menuLocadora/0]).
+:- module(Locadora, [menuLocadora/0]).
 :- use_module(library(odbc)).
 :- use_module(util).
 :- use_module(dbop).

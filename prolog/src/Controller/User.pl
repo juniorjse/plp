@@ -28,7 +28,7 @@ escolherOpcao("0") :-
     halt.
 
 escolherOpcao(_) :-
-    writeln('Opção inválida. Por favor, escolha novamenteeeeee.'),
+    writeln('Opção inválida. Por favor, escolha novamente.'),
     menu.
 
 login :-
@@ -38,29 +38,31 @@ login :-
     read_line_to_string(user_input, Email),
     writeln('Digite a sua senha:'),
     read_line_to_string(user_input, Senha),
-    authenticate(Connection, Email, Senha, Autenticado),
+    authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenticado),
     ( Autenticado =:= 1 ->
-        writeln('Login bem-sucedido!'),
-        menuCliente
+        format('Seja bem-vindo, ~w\n', [NomeUsuario]),
+        format('Tipo de Cliente: ~w\n', [TipoUsuario]),
+        (TipoUsuario = 'administrador' ->
+            menuLocadora
+        ; TipoUsuario = 'mecanico' ->
+            menuMecanica
+        ; 
+            menuCliente
+        )
     ;
         writeln(''),
         writeln('E-mail ou senha inválidos!')
     ).
 
-redirecionarMenu("administrador") :-
-    menuLocadora.
-
-redirecionarMenu("mecanico") :-
-    menuMecanico.
-
-redirecionarMenu("cliente") :-
-    menuCliente.
-
-authenticate(Connection, Email, Senha, Autenticado) :-
+authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenticado) :-
     getUser(Connection, Email, Senha, User),
-    ( User = [] ->
-        Autenticado is 0 ; % Usuário não encontrado
-        Autenticado is 1 % Senha correta
+    (User = [Row|_], % Pega a primeira linha (deve haver apenas uma)
+     Row = row(UserID, NomeUsuario, _, _, _, TipoUsuario) ->
+        Autenticado = 1
+    ;
+        Autenticado = 0,
+        NomeUsuario = none,
+        TipoUsuario = none
     ).
 
 menuCliente :-
