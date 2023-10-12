@@ -5,6 +5,8 @@
 :- use_module('./localdb/user_operations').
 :- use_module('./Locadora').
 :- use_module('./Mecanica').
+:- dynamic(current_user_id/1).
+current_user_id(0).
 
 menu :-
     writeln(''),
@@ -41,7 +43,6 @@ login :-
     authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenticado),
     ( Autenticado =:= 1 ->
         format('Seja bem-vindo, ~w\n', [NomeUsuario]),
-        format('Tipo de Cliente: ~w\n', [TipoUsuario]),
         (TipoUsuario = 'administrador' ->
             menuLocadora
         ; TipoUsuario = 'mecanico' ->
@@ -56,9 +57,10 @@ login :-
 
 authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenticado) :-
     getUser(Connection, Email, Senha, User),
-    (User = [Row|_], % Pega a primeira linha (deve haver apenas uma)
+    (User = [Row|_],
      Row = row(UserID, NomeUsuario, _, _, _, TipoUsuario) ->
-        Autenticado = 1
+        Autenticado = 1,
+        asserta(current_user_id(UserID)) % Armazena o ID do usuário
     ;
         Autenticado = 0,
         NomeUsuario = none,
@@ -74,9 +76,15 @@ menuCliente :-
     writeln('4. Ranking de Carros Mais Alugados'),
     writeln('Escolha uma opção:'),
 
-    read_line_to_string(user_input, Opcao), % Leitura da opção do cliente aqui.
+    read_line_to_string(user_input, Opcao),
 
-    writeln('').
+    (Opcao = "1" -> listarCarrosPorCategoria, menuCliente;
+     Opcao = "2" -> 
+        realizarAluguel(Connection),
+        menuCliente;
+     Opcao = "3" -> cancelarAluguel, menuCliente;
+     Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
+     writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
 
 solicitarCadastro :-
     writeln(''),
@@ -143,3 +151,54 @@ usuario(Email, Senha, Nome, Sobrenome) :-
         dbop:db_parameterized_query(Connection, 'SELECT nome, sobrenome FROM usuarios WHERE email = ?', [Email], [row(Nome, Sobrenome)])
     ),
     connectiondb:encerrandoDatabase(Connection).
+
+
+authenticateCar(Connection, CarroID, DiariaCarro, Autenticado) :-
+    getCarro(Connection, CarroID, CarroInfo),
+    (CarroInfo = [row(_, _, _, _, _, _, _, _, DiariaCarro, _)] ->
+        Autenticado = 1
+    ;
+        Autenticado = 0
+    ).
+
+realizarAluguel(Connection) :-
+    current_user_id(UserID),
+    iniciandoDatabase(Connection),
+    writeln(''),
+    writeln('Digite o ID do carro:'),
+    read_line_to_string(user_input, CarroIDStr),
+    atom_number(CarroIDStr, CarroID),
+
+    writeln('Digite a quantidade de dias que deseja alugar:'),
+    read_line_to_string(user_input, DiasAluguelStr),
+    atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
+
+    authenticateCar(Connection, CarroID, DiariaCarro, Autenticado),
+
+    ( Autenticado =:= 1 ->
+        ValorTotal is DiariaCarro * DiasAluguel,
+        writeln(''),
+        writeln('Resumo do Aluguel:'),
+        format('ID do Carro: ~w\n', [CarroID]),
+        format('Dias de Aluguel: ~w\n', [DiasAluguel]),
+        format('Valor Total: ~w\n', [ValorTotal]),
+        writeln(''),
+        writeln('Deseja confirmar o aluguel desse carro?'),
+        writeln('1. Sim'),
+        writeln('2. Não'),
+        read_line_to_string(user_input, ConfirmaComNL), 
+        atom_chars(ConfirmaComNL, [ConfirmaChar|_]),
+
+        (ConfirmaChar = '1' ->
+            writeln(''),
+            alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal),
+            writeln('Aluguel realizado com sucesso!')
+        ;
+            writeln(''),
+            writeln('Aluguel cancelado.')
+        )
+
+    ;
+        writeln('Carro não encontrado.')
+    ).
+
