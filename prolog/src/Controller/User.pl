@@ -178,9 +178,6 @@ realizarAluguel(Connection) :-
     ( Autenticado =:= 1 ->
         ValorTotal is DiariaCarro * DiasAluguel,
         writeln(''),
-        writeln('Resumo do Aluguel:'),
-        format('ID do Carro: ~w\n', [CarroID]),
-        format('Dias de Aluguel: ~w\n', [DiasAluguel]),
         format('Valor Total: ~w\n', [ValorTotal]),
         writeln(''),
         writeln('Deseja confirmar o aluguel desse carro?'),
