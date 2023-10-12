@@ -1,4 +1,5 @@
-:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4]).
+:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
+                            createCar/9, carroPorPlaca/3, carAlreadyExists/3]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -41,3 +42,24 @@ getusuariosByEmail(Connection, [ Email | T ], usuariosTemp, usuarios):-
         getUserByEmail(Connection, Email, User),
         reverse([ User | usuariosTemp ], usuarios)
     ).
+
+%CAR_OPERATIONS
+
+createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao, Confirmacao) :-
+    carAlreadyExists(Connection, Placa, confCarro),
+    (confCarro =:= 0 ->
+        db_parameterized_query_no_return(
+                Connection,
+                "INSERT INTO carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES ( '%w', '%w', '%w', '%w', '%w', 0.0, 'A', '%w', '%w')",
+                [Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao]),
+            Confirmacao is 1;
+            Confirmacao is 0).
+
+carroPorPlaca(Connection, Placa, Carro):-
+    Q = "SELECT * FROM carros WHERE placa = ?",
+    db_parameterized_query(Connection, Q, [Placa], Carro).
+
+carAlreadyExists(Connection, Placa, Confirmacao):-
+    carroPorPlaca(Connection, Placa, Carro),
+    length(Carro, Confirmacao).
+

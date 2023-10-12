@@ -5,11 +5,14 @@
 
 menuMecanica :-
     writeln(''),
-    writeln('Menu:'),
-    writeln('1. Carros aguardando reparo'),
-    writeln('2. Marcar reparo como finalizado'),
-    writeln('0. Sair'),
-    writeln('Escolha uma opção:'),
+    writeln('|---------------------------------|'),
+    writeln('|              MENU               |'),
+    writeln('|---------------------------------|'),
+    writeln('|1. Carros aguardando reparo      |'),
+    writeln('|2. Marcar reparo como finalizado |'),
+    writeln('|0. Sair                          |'),
+    writeln(''),
+    writeln('Escolha uma opção: '),
 
     read_line_to_string(user_input, Opcao),
 

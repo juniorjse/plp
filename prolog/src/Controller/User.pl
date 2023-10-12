@@ -8,10 +8,13 @@
 
 menu :-
     writeln(''),
-    writeln('Menu:'),
-    writeln('1. Logar'),
-    writeln('2. Cadastrar'),
-    writeln('0. Sair'),
+    writeln('|------------------|'),
+    writeln('|       MENU       |'),
+    writeln('|------------------|'),
+    writeln('|1. Logar          |'),
+    writeln('|2. Cadastrar      |'),
+    writeln('|0. Sair           |'),
+    writeln(''),
     writeln('Escolha uma opção:'),
     read_line_to_string(user_input, Opcao),
     escolherOpcao(Opcao).
@@ -41,10 +44,11 @@ login :-
     authenticate(Connection, Email, Senha, Autenticado),
     ( Autenticado =:= 1 ->
         writeln('Login bem-sucedido!'),
-        menuCliente
+        locadora:menuLocadora
     ;
         writeln(''),
-        writeln('E-mail ou senha inválidos!')
+        writeln('E-mail ou senha inválidos!'),
+        menu
     ).
 
 redirecionarMenu("administrador") :-
