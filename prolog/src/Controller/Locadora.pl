@@ -1,4 +1,4 @@
-:- module(locadora, [menuLocadora/0, escolherOpcao/1, cadastrarCarro/0, naoConfirmaCadastro/0]).
+:- module(locadora, [menuLocadora/0, opcaoMenu/1, cadastrarCarro/0, confirmaCadastro/1]).
 :- use_module(library(odbc)).
 :- use_module('./localdb/connectiondb').
 :- use_module('./localdb/dbop').
@@ -19,13 +19,14 @@ menuLocadora :-
     writeln('Escolha uma opção:'),
     read_line_to_string(user_input, Opcao),
     writeln(''),
-    escolherOpcao(Opcao).
+    opcaoMenu(Opcao).
 
-escolherOpcao("1") :-    cadastrarCarro.
-escolherOpcao("0") :-    writeln('Saindo...'), writeln(''), halt.
-escolherOpcao(_)   :-    writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora.
+opcaoMenu("1") :-    cadastrarCarro.
+opcaoMenu("0") :-    writeln('Saindo...'), writeln(''), halt.
+opcaoMenu(_)   :-    writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora.
 
 cadastrarCarro :-
+    connectiondb:iniciandoDatabase(Connection),
     writeln(''),
     writeln('|--------------------------------|'),
     writeln('| Digite as informações do carro |'),
@@ -36,16 +37,16 @@ cadastrarCarro :-
     read_line_to_string(user_input, Modelo),
     write('|Ano:       '),
     read_line_to_string(user_input, A),
-    atom_number(A,Ano),
+    atom_number(A, Ano),
     write('|Placa:     '),
-    read_line_to_string(user_input, Placa),    
+    read_line_to_string(user_input, Placa),
     write('|Categoria: '),
-    read_line_to_string(user_input, Categoria),    
-    write('|Diária:    '),    
+    read_line_to_string(user_input, Categoria),
+    write('|Diária:    '),
     read_line_to_string(user_input, D),
-    atom_number(D,Diaria),
+    atom_number(D, Diaria),
     write('|Descrição: '),
-    read_line_to_string(user_input, Descricao),   
+    read_line_to_string(user_input, Descricao),
     writeln(''),
     (
         (Marca = "" ; Modelo = "" ; Ano = "" ; Placa = ""; Categoria = "" ; Diaria = "" ; Descricao = "") ->
@@ -53,36 +54,24 @@ cadastrarCarro :-
             writeln(''),
             cadastrarCarro
         ;
-        naoConfirmaCadastro ->
-            writeln('Esse cadastro foi cancelado!'),
-            menuLocadora
+        confirmaCadastro(Confirm),
+        (
+        Confirm = "2" -> writeln('Esse cadastro foi cancelado!')
         ;
-            createCar(Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao, Confirmacao),
-            (
-                Confirmacao =:= 1 ->
-                    writeln('Cadastro realizado com sucesso! Informações do carro cadastrado:'),
-                    format("Marca:    %w \n Modelo:    %w \n Ano:      %w \n Placa:    %w \n Categoria: %w \n Diária:    %w \n Descrição: %w \n ", 
-                            [Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao]),
-                    menuLocadora
-                ;
-                    writeln('Esse carro já foi cadastrado no sistema! Tente novamente.'),
-                    cadastrarCarro
-            )
-        ).
-
-naoConfirmaCadastro:-
-    write('Tem certeza que deseja cadastrar esse carro? \n 1.Sim \n 2.Não \n'), read_line_to_string(user_input, C),
-    (C = "1" -> false ; C = "2" -> true ; naoConfirmaCadastro).
-
-createCar(Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao, Confirmacao) :-
-    connectiondb:iniciandoDatabase(Connection),
-    carAlreadyExists(Connection, Placa, confCarro),
-    (confCarro =:= 0 ->
-            format(string(Query), "INSERT INTO carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES ( '~w', '~w', '~w', '~w', '~w', '~w', '~w', '~w')",
-               [Marca, Modelo, Ano, Placa, Categoria, 0.0, "A", Diaria, Descricao]),
-            dbop:db_query_no_return(Connection, Query),             
-            Confirmacao is 1
-        ;
-            Confirmacao is 0
+        Confirm = "1" ->
+            user_operations:carAlreadyExists(Connection, Placa, carroExiste),
+            writeln(carroExiste),
+            (carroExiste = 0 -> 
+                user_operations:createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao),
+                menuLocadora)
+            ;
+            writeln('Esse carro já foi cadastrado no sistema! Tente novamente.'))
     ),
-    connectiondb:encerrandoDatabase(Connection).
+    connectiondb:encerrandoDatabase(Connection),
+    menuLocadora.
+
+confirmaCadastro(Confirm) :-
+    writeln('Tem certeza que deseja cadastrar esse carro? \n 1. Sim \n 2. Não'),
+    read_line_to_string(user_input, C),
+    ((C \= "1", C \= "2") -> writeln('Opção inválida, tente novamente.\n'), confirmaCadastro(Confirm) ;
+    Confirm = C).

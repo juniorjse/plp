@@ -1,20 +1,8 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
-                            createCar/9, carroPorPlaca/3, carAlreadyExists/3]).
+                            createCar/8, carroPorPlaca/3, carAlreadyExists/3, getIdCarro/3]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
-
-
-createUser(Connection, Email, Senha, Nome, Sobrenome, Confirmacao):-
-    userAlreadyExists(Connection, Email, Fstconf),
-    ( Fstconf =:= 0 ->
-        db_parameterized_query_no_return(
-            Connection, 
-            "INSERT INTO usuarios (nome, sobrenome, email, senha) values ('%w','%w','%w','%w');",
-            [ Nome, Sobrenome, Email, Senha]),
-        Confirmacao is 1;
-        Confirmacao is 0).
-
 
 getUserByEmail(Connection, Email, User):-
     Q = "SELECT * FROM usuarios WHERE email = '%w'",
@@ -27,7 +15,6 @@ getTipoByEmail(Connection, Email, Tipo):-
 getUser(Connection, Email, Senha, User) :-
     Q = "SELECT * FROM usuarios WHERE email = '%w' and senha = '%w'",
     db_parameterized_query(Connection, Q, [Email, Senha], User).
-
 
 userAlreadyExists(Connection, Email, Confirmacao):-
     getUserByEmail(Connection, Email, User),
@@ -42,24 +29,58 @@ getusuariosByEmail(Connection, [ Email | T ], usuariosTemp, usuarios):-
         getUserByEmail(Connection, Email, User),
         reverse([ User | usuariosTemp ], usuarios)
     ).
+createUser(Connection, Email, Senha, Nome, Sobrenome, Confirmacao):-
+    userAlreadyExists(Connection, Email, Fstconf),
+    ( Fstconf =:= 0 ->
+        db_parameterized_query_no_return(
+            Connection, 
+            "INSERT INTO usuarios (nome, sobrenome, email, senha) values ('%w','%w','%w','%w');",
+            [ Nome, Sobrenome, Email, Senha]),
+        Confirmacao is 1;
+        Confirmacao is 0).
+alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
+    db_parameterized_query_no_return(
+        Connection, 
+        "INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (%w, %w, CURRENT_DATE, CURRENT_DATE + interval '%w day', %w, 'ativo');",
+        [CarroID, UserID, DiasAluguel, ValorTotal]
+    ),
+    % Atualizar o status do carro para 'O' (ou o status apropriado) na tabela "carros"
+    db_parameterized_query_no_return(
+        Connection, 
+        "UPDATE carros SET status = 'O' WHERE id_carro = %w;",
+        [CarroID]
+    ).
+
+getCarro(Connection, CarroID, CarroInfo) :-
+    Q = "SELECT * FROM carros WHERE id_carro = '%w'",
+    db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
+
 
 %CAR_OPERATIONS
 
-createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao, Confirmacao) :-
-    carAlreadyExists(Connection, Placa, confCarro),
-    (confCarro =:= 0 ->
-        db_parameterized_query_no_return(
-                Connection,
-                "INSERT INTO carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) VALUES ( '%w', '%w', '%w', '%w', '%w', 0.0, 'A', '%w', '%w')",
-                [Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao]),
-            Confirmacao is 1;
-            Confirmacao is 0).
-
-carroPorPlaca(Connection, Placa, Carro):-
-    Q = "SELECT * FROM carros WHERE placa = ?",
+carroPorPlaca(Connection, Placa, Carro) :-
+    Q = "SELECT * FROM carros WHERE placa = '%w';",
     db_parameterized_query(Connection, Q, [Placa], Carro).
 
-carAlreadyExists(Connection, Placa, Confirmacao):-
-    carroPorPlaca(Connection, Placa, Carro),
-    length(Carro, Confirmacao).
+getIdCarro(Connection, Placa, Id) :-
+    Q = "SELECT id_carro FROM carros WHERE placa = '%w';",
+    db_parameterized_query(Connection, Q, [Placa], Id).
 
+
+carAlreadyExists(Connection, Placa, confCarro):-
+    carroPorPlaca(Connection, Placa, Carro),
+    (Carro = [] -> confCarro = 0;
+    confCarro = 1).
+
+
+createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao) :-
+    db_parameterized_query_no_return(
+        Connection,
+        "INSERT INTO carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) 
+        VALUES ( '%w', '%w', %w, '%w', '%w', %w, '%w', %w, '%w');",
+        [Marca, Modelo, Ano, Placa, Categoria, 0.0, "A", Diaria, Descricao]
+        ),
+    getIdCarro(Connection, Placa, Id),
+    writeln('Cadastro realizado com sucesso! Informações do carro cadastrado:'),
+    format("ID:       %w \n Marca:    %w \n Modelo:    %w \n Ano:      %w \n Placa:    %w \n Categoria: %w \n Diária:    %w \n Descrição: %w \n ", 
+            [Id, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao]).
