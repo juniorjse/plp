@@ -78,7 +78,7 @@ menuCliente :-
 
     read_line_to_string(user_input, Opcao),
 
-    (Opcao = "1" -> listarCarrosPorCategoria, menuCliente;
+    (Opcao = "1" -> listarCarrosPorCategoria(Connection);
      Opcao = "2" -> 
         realizarAluguel(Connection),
         menuCliente;
@@ -199,3 +199,62 @@ realizarAluguel(Connection) :-
         writeln('Carro não encontrado.')
     ).
 
+
+limpar_tela :- shell('cls').
+
+consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
+    connectiondb:iniciandoDatabase(Connection),
+    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'", [Categoria], Carros),
+    connectiondb:encerrandoDatabase(Connection).
+
+listarCarrosPorCategoria(Connection) :-
+    limpar_tela,
+    writeln("Opções de Categoria:"),
+    writeln("1. Econômico"),
+    writeln("2. Intermediário"),
+    writeln("3. SUV"),
+    writeln("4. Luxo"),
+    writeln("5. Minivan"),
+    writeln("6. Sedan"),
+    writeln("7. Conversível"),
+    writeln("8. Esportivo"),
+    writeln("9. Pickup"),
+    writeln("10. Elétrico"),
+    writeln(""),
+    writeln("Escolha a categoria de carro desejada (Exemplo: 3): "),
+
+    read_line_to_string(user_input, Categoria),
+    buscarCarrosPorCategoria(Connection, Categoria).
+
+buscarCarrosPorCategoria(Connection, Categoria) :-
+    (Categoria = "1" -> CategoriaEscolhida = "Econômico";
+    Categoria = "2" -> CategoriaEscolhida = "Intermediário";
+    Categoria = "3" -> CategoriaEscolhida = "SUV";
+    Categoria = "4" -> CategoriaEscolhida = "Luxo";
+    Categoria = "5" -> CategoriaEscolhida = "Minivan";
+    Categoria = "6" -> CategoriaEscolhida = "Sedan";
+    Categoria = "7" -> CategoriaEscolhida = "Conversível";
+    Categoria = "8" -> CategoriaEscolhida = "Esportivo";
+    Categoria = "9" -> CategoriaEscolhida = "Pickup";
+    Categoria = "10" -> CategoriaEscolhida = "Elétrico";
+    writeln('Opção inválida. Por favor, escolha novamente.'), listarCarrosPorCategoria(Connection)),
+    
+    consultarCarrosPorCategoria(Connection, CategoriaEscolhida, Carros),
+    
+    printCarros(CategoriaEscolhida, Carros),
+    menuCliente.
+
+printCarros(Categoria, [], _, _, _).
+printCarros(Categoria, [row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
+    writeln('Carros disponíveis na categoria '),
+    writeln(Categoria),
+    writeln('ID: '),
+    writeln(ID_Carro),
+    writeln(' | Marca: '),
+    writeln(Marca),
+    writeln(' | Modelo: '),
+    writeln(Modelo),
+    writeln(' | Ano: '),
+    writeln(Ano),
+    writeln(''),
+    printCarros(Categoria, RestoCarros).
