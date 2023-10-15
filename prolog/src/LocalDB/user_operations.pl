@@ -1,5 +1,5 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
-                            createCar/8, carroPorPlaca/3, carAlreadyExists/3, getIdCarro/3]).
+                            createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -56,31 +56,37 @@ getCarro(Connection, CarroID, CarroInfo) :-
     db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
 
 
-%CAR_OPERATIONS
-
 carroPorPlaca(Connection, Placa, Carro) :-
     Q = "SELECT * FROM carros WHERE placa = '%w';",
     db_parameterized_query(Connection, Q, [Placa], Carro).
 
-getIdCarro(Connection, Placa, Id) :-
-    Q = "SELECT id_carro FROM carros WHERE placa = '%w';",
-    db_parameterized_query(Connection, Q, [Placa], Id).
+getProximoIDCarro(Connection, ProximoID) :-
+    db_query(
+        Connection,
+        "SELECT COALESCE(MAX(id_carro), 0) + 1 as ProximoID FROM Carros",
+        Rows
+    ),
+    Rows = [row(ProximoID)].
 
 
-carAlreadyExists(Connection, Placa, confCarro):-
+carAlreadyExists(Connection, Placa, ConfCarro) :-
     carroPorPlaca(Connection, Placa, Carro),
-    (Carro = [] -> confCarro = 0;
-    confCarro = 1).
+    length(Carro, ConfCarro).
 
 
 createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao) :-
-    db_parameterized_query_no_return(
-        Connection,
-        "INSERT INTO carros (marca, modelo, ano, placa, categoria, quilometragem, status, diaria_carro, descricao_carro) 
-        VALUES ( '%w', '%w', %w, '%w', '%w', %w, '%w', %w, '%w');",
-        [Marca, Modelo, Ano, Placa, Categoria, 0.0, "A", Diaria, Descricao]
-        ),
-    getIdCarro(Connection, Placa, Id),
-    writeln('Cadastro realizado com sucesso! Informações do carro cadastrado:'),
-    format("ID:       %w \n Marca:    %w \n Modelo:    %w \n Ano:      %w \n Placa:    %w \n Categoria: %w \n Diária:    %w \n Descrição: %w \n ", 
-            [Id, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao]).
+    carAlreadyExists(Connection, Placa, CarroExiste),
+    (CarroExiste =:= 0 -> 
+        getProximoIDCarro(Connection, Id),
+        db_parameterized_query_no_return(
+            Connection,
+            "INSERT INTO carros (id_carro, marca, modelo, ano, placa, categoria, status, quilometragem, diaria_carro, descricao_carro) 
+            VALUES ( %w, '%w', '%w', %w, '%w', '%w', '%w', %w, %w, '%w');",
+            [Id, Marca, Modelo, Ano, Placa, Categoria, "A", 0.0, Diaria, Descricao]
+            ),
+        writeln("\nCadastro realizado com sucesso! \nInformações do carro cadastrado:\n"),
+        format("|ID:        ~w \n|Marca:     ~w \n|Modelo:    ~w \n|Ano:       ~w \n|Placa:     ~w \n|Categoria: ~w \n|Diária:    ~w \n|Descrição: ~w \n ", 
+                [Id, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao])
+    ;
+    writeln("\nEsse carro já foi cadastrado no sistema! Tente novamente.")
+    ).

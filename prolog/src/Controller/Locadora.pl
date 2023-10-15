@@ -48,24 +48,19 @@ cadastrarCarro :-
     write('|Descrição: '),
     read_line_to_string(user_input, Descricao),
     writeln(''),
+    confirmaCadastro(Confirm),
     (
         (Marca = "" ; Modelo = "" ; Ano = "" ; Placa = ""; Categoria = "" ; Diaria = "" ; Descricao = "") ->
             writeln('Nenhum campo pode estar vazio. Por favor, tente novamente.'),
             writeln(''),
             cadastrarCarro
         ;
-        confirmaCadastro(Confirm),
         (
         Confirm = "2" -> writeln('Esse cadastro foi cancelado!')
         ;
         Confirm = "1" ->
-            user_operations:carAlreadyExists(Connection, Placa, carroExiste),
-            writeln(carroExiste),
-            (carroExiste = 0 -> 
-                user_operations:createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao),
-                menuLocadora)
-            ;
-            writeln('Esse carro já foi cadastrado no sistema! Tente novamente.'))
+            user_operations:createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao)
+        )
     ),
     connectiondb:encerrandoDatabase(Connection),
     menuLocadora.
@@ -73,5 +68,5 @@ cadastrarCarro :-
 confirmaCadastro(Confirm) :-
     writeln('Tem certeza que deseja cadastrar esse carro? \n 1. Sim \n 2. Não'),
     read_line_to_string(user_input, C),
-    ((C \= "1", C \= "2") -> writeln('Opção inválida, tente novamente.\n'), confirmaCadastro(Confirm) ;
+    ((C \= "1" , C \= "2") -> writeln('Opção inválida, tente novamente.\n'), confirmaCadastro(Confirm) ;
     Confirm = C).
