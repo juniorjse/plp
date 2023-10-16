@@ -1,6 +1,6 @@
-:- module(Locadora, [menuLocadora/0, listarAlugueisPorCliente/1]).
+:- module(Locadora, [menuLocadora/0, listarAlugueisPorCliente/0]).
 :- use_module(library(odbc)).
-:- use_module(util).
+:- use_module(Controller/util).
 :- use_module(dbop).
 :- use_module(library(date)).
 
