@@ -1,6 +1,9 @@
-:- module(locadora, [menuLocadora/0, menuDashboard/1, calcularReceitaTotal/0, contarAlugueis/1, contarCarros/0, 
-listarCarrosMaisDefeituosos/1, listarAlugueisPorCategoria/0, exibirReceitaTotal/1, 
-exibirNumeroDeAlugueis/0, exibirTotalDeCarros/1, exibirCarrosMaisDefeituosos/0, exibirAlugueisPorCategoria/1]).
+:- module(locadora, [menuLocadora/0, menuDashboard/1, menuOpcao/1, calcularReceitaTotal/2, 
+contarAlugueis/2, contarCarros/2, listarCarrosMaisDefeituosos/2, listarAlugueisPorCategoria/2, exibirReceitaTotal/1,
+exibirNumeroDeAlugueis/1, exibirTotalDeCarros/1, 
+exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1]).
+
+
 :- use_module(util).
 :- use_module(library(odbc)).
 :- use_module(library(readutil)).
@@ -35,13 +38,13 @@ menuDashboard(Connection) :-
     writeln('Escolha uma opção (ou digite qualquer outra coisa para voltar ao menu principal):'),
     read_line_to_string(user_input, Opcao),
     writeln(''),
-    menuOpcao(Opcao, Connection).
+    menuOpcao(Opcao).
 
 menuOpcao("1", Connection) :- exibirReceitaTotal(Connection).
 menuOpcao("2", Connection) :- exibirNumeroDeAlugueis(Connection).
 menuOpcao("3", Connection) :- exibirTotalDeCarros(Connection).
 menuOpcao("4", Connection) :- exibirCarrosMaisDefeituosos(Connection).
-menuOpcao("5", Connection) :- exibirAlugueisPorCategoria(Connection).
+menuOpcao("5", Connection :- exibirAlugueisPorCategoria(Connection).
 menuOpcao(_, Connection) :-
     writeln('Dígito inválido. Voltando ao menu principal.'),
     menuDashboard(Connection).
@@ -91,10 +94,5 @@ exibirAlugueisPorCategoria(Connection) :-
     maplist(writeCategoria, Alugueis),
     menuDashboard(Connection).
 
-writeCarro([Marca, Modelo]) :-
-    format('~w ~w~n', [Marca, Modelo]).
-
-writeCategoria([Categoria, Quantidade]) :-
-    format('~w: ~w~n', [Categoria, Quantidade]).
 
 
