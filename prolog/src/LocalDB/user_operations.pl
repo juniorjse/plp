@@ -1,5 +1,5 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
-                            createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2]).
+                            createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2, consultarCarrosPraReparo/2]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -55,6 +55,11 @@ getCarro(Connection, CarroID, CarroInfo) :-
     Q = "SELECT * FROM carros WHERE id_carro = '%w'",
     db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
 
+consultarCarrosPraReparo(Connection, Carros) :-
+    db_query(
+        Connection, 
+        "SELECT id_carro, marca, modelo, ano, placa FROM carros WHERE status = 'R'", 
+        Carros).
 
 carroPorPlaca(Connection, Placa, Carro) :-
     Q = "SELECT * FROM carros WHERE placa = '%w';",
@@ -90,3 +95,4 @@ createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao) :
     ;
     writeln("\nEsse carro já foi cadastrado no sistema! Tente novamente.")
     ).
+
