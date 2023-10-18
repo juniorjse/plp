@@ -15,5 +15,11 @@ menuLocadora :-
     writeln('Escolha uma opção:'),
 
     read_line_to_string(user_input, Opcao),
+    (Opcao = "1" -> cadastrarCarro, menuLocadora;
+     Opcao = "2" -> removerCarro, menuLocadora;
+     Opcao = "3" -> registrarDevolucao, menuLocadora;
+     Opcao = "4" -> registroDeAluguelPorPessoa, menuLocadora;
+     Opcao = "5" -> dashboard, menuLocadora;
+     Opcao = "0" -> halt;
+     writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
 
-    writeln('').
