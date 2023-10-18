@@ -1,4 +1,5 @@
-:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4, menuCliente/0]).
+:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4, menuCliente/0,
+            listarCarrosPorCategoria/1, printCarros/1]).
 :- use_module(library(odbc)).
 :- use_module('./localdb/connectiondb').
 :- use_module('./localdb/dbop').
@@ -74,6 +75,7 @@ menuCliente :-
     writeln('2. Realizar aluguel'),
     writeln('3. Cancelar aluguel'),
     writeln('4. Ranking de Carros Mais Alugados'),
+    writeln('0. Sair'),
     writeln('Escolha uma opção:'),
 
     read_line_to_string(user_input, Opcao),
@@ -84,6 +86,7 @@ menuCliente :-
         menuCliente;
      Opcao = "3" -> cancelarAluguel, menuCliente;
      Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
+     Opcao = "0" -> halt;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
 
 solicitarCadastro :-
@@ -204,11 +207,11 @@ limpar_tela :- shell('cls').
 
 consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
     connectiondb:iniciandoDatabase(Connection),
-    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = ? AND status = 'D'", [Categoria], Carros),
+    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = '%w' AND status = 'D'", [Categoria], Carros),
     connectiondb:encerrandoDatabase(Connection).
 
 listarCarrosPorCategoria(Connection) :-
-    limpar_tela,
+    %limpar_tela,
     writeln("Opções de Categoria:"),
     writeln("1. Econômico"),
     writeln("2. Intermediário"),
@@ -241,20 +244,17 @@ buscarCarrosPorCategoria(Connection, Categoria) :-
     
     consultarCarrosPorCategoria(Connection, CategoriaEscolhida, Carros),
     
-    printCarros(CategoriaEscolhida, Carros),
+    write('Carros disponíveis na categoria '),
+    writeln(Categoria),
+
+    printCarros(Carros),
     menuCliente.
 
-printCarros(Categoria, [], _, _, _).
-printCarros(Categoria, [row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
-    writeln('Carros disponíveis na categoria '),
-    writeln(Categoria),
-    writeln('ID: '),
-    writeln(ID_Carro),
-    writeln(' | Marca: '),
-    writeln(Marca),
-    writeln(' | Modelo: '),
-    writeln(Modelo),
-    writeln(' | Ano: '),
-    writeln(Ano),
-    writeln(''),
-    printCarros(Categoria, RestoCarros).
+printCarros([]).
+printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
+    write('ID: '), writeln(ID_Carro),
+    write('Marca: '), writeln(Marca),
+    write('Modelo: '), writeln(Modelo),
+    write('Ano: '), writeln(Ano),
+    nl,
+    printCarros(RestoCarros).
