@@ -61,6 +61,11 @@ consultarCarrosPraReparo(Connection, Carros) :-
         "SELECT id_carro, marca, modelo, ano, placa FROM carros WHERE status = 'R'", 
         Carros).
 
+carrosPorPopularidade(Connection,Carros) :-
+    db_query(Connection,
+    "SELECT c.marca, c.modelo, c.ano, c.placa, COUNT(*) as quantidade_alugueis FROM Alugueis a JOIN Carros c ON a.id_carro = c.id_carro GROUP BY c.marca, c.modelo, c.ano, c.placa ORDER BY quantidade_alugueis DESC;",
+    Carros).
+
 carroPorPlaca(Connection, Placa, Carro) :-
     Q = "SELECT * FROM carros WHERE placa = '%w';",
     db_parameterized_query(Connection, Q, [Placa], Carro).

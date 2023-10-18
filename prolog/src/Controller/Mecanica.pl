@@ -28,10 +28,9 @@ menuMecanica :-
     ).
 
 carrosPraReparo :-
-    writeln("------------------------"),
-    writeln("   CARROS COM DEFEITO   "),
-    writeln("------------------------"),
-    writeln(''),
+    writeln("|------------------------------------------------------------------------------|"),
+    writeln("|                              CARROS COM DEFEITO                              |"),
+    writeln("|------------------------------------------------------------------------------|"),
     connectiondb:iniciandoDatabase(Connection),
     user_operations:consultarCarrosPraReparo(Connection,ListaCarros),
     mostraCarros(ListaCarros),
@@ -40,10 +39,5 @@ carrosPraReparo :-
 
 mostraCarros([]).  
 mostraCarros([row(Id, Marca, Modelo, Ano, Placa) | Outros]) :-
-    write('| ID:     '),       writeln(Id),
-    write('| Marca:  '),    writeln(Marca),
-    write('| Modelo: '),   writeln(Modelo),
-    write('| Ano:    '),      writeln(Ano),
-    write('| Placa:  '),    writeln(Placa),
-    writeln(''),
+    format('|Id:~t ~w ~t~7+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w|~n~n~n',[ Id, Marca, Modelo, Ano, Placa]),
     mostraCarros(Outros).

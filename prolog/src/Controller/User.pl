@@ -85,8 +85,9 @@ menuCliente :-
     writeln('Escolha uma opção:'),
 
     read_line_to_string(user_input, Opcao),
+    writeln(''),
 
-    (Opcao = "1" -> listarCarrosPorCategoria, menuCliente;
+    (Opcao = "1" -> listarCarrosPorCategoria(Connection), menuCliente;
      Opcao = "2" -> 
         realizarAluguel(Connection),
         menuCliente;
@@ -207,4 +208,20 @@ realizarAluguel(Connection) :-
     ;
         writeln('Carro não encontrado.')
     ).
+
+rankingCarrosMaisAlugados :-
+    writeln("|--------------------------------------------------------------------------------------|"),
+    writeln("|                                  RANKING DE CARROS                                   |"),
+    writeln("|--------------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+    user_operations:carrosPorPopularidade(Connection,ListaCarros),
+    mostraCarros(ListaCarros),
+    writeln("|--------------------------------------------------------------------------------------|"),
+    connectiondb:encerrandoDatabase(Connection),
+    menuMecanica.
+
+mostraCarros([]).  
+mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
+    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n~n~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
+    mostraCarros(Outros).
 
