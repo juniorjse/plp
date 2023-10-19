@@ -216,12 +216,12 @@ rankingCarrosMaisAlugados :-
     connectiondb:iniciandoDatabase(Connection),
     user_operations:carrosPorPopularidade(Connection,ListaCarros),
     mostraCarros(ListaCarros),
-    writeln("|--------------------------------------------------------------------------------------|"),
+    writeln("|--------------------------------------------------------------------------------------|\n\n\n"),
     connectiondb:encerrandoDatabase(Connection),
     menuMecanica.
 
 mostraCarros([]).  
 mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
-    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n~n~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
+    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
     mostraCarros(Outros).
 
