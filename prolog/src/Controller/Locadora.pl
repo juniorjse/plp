@@ -1,4 +1,4 @@
-:- module(locadora, [menuLocadora/0, menuDashboard/1, menuOpcao/1, calcularReceitaTotal/2, 
+:- module(locadora, [menuLocadora/0, menuDashboard/0, menuOpcao/1, calcularReceitaTotal/2, 
 contarAlugueis/2, contarCarros/2, listarCarrosMaisDefeituosos/2, listarAlugueisPorCategoria/2, exibirReceitaTotal/1,
 exibirNumeroDeAlugueis/1, exibirTotalDeCarros/1, 
 exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1]).
@@ -27,7 +27,10 @@ menuLocadora :-
 
     writeln('').
 
-menuDashboard(Connection) :-
+menuDashboard :-
+
+    connectiondb:iniciandoDatabase(Connection),
+
     writeln(''),
     writeln('Dashboard:'),
     writeln('1. Receita total'),
@@ -44,7 +47,8 @@ menuOpcao("1", Connection) :- exibirReceitaTotal(Connection).
 menuOpcao("2", Connection) :- exibirNumeroDeAlugueis(Connection).
 menuOpcao("3", Connection) :- exibirTotalDeCarros(Connection).
 menuOpcao("4", Connection) :- exibirCarrosMaisDefeituosos(Connection).
-menuOpcao("5", Connection :- exibirAlugueisPorCategoria(Connection).
+menuOpcao("5", Connection) :- exibirAlugueisPorCategoria(Connection).
+
 menuOpcao(_, Connection) :-
     writeln('Dígito inválido. Voltando ao menu principal.'),
     menuDashboard(Connection).
@@ -93,6 +97,8 @@ exibirAlugueisPorCategoria(Connection) :-
     writeln('Aluguéis por Categoria:'),
     maplist(writeCategoria, Alugueis),
     menuDashboard(Connection).
+
+connectiondb:encerrandoDatabase(Connection).
 
 
 
