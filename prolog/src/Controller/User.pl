@@ -82,7 +82,9 @@ menuCliente :-
      Opcao = "2" -> 
         realizarAluguel(Connection),
         menuCliente;
-     Opcao = "3" -> cancelarAluguel, menuCliente;
+     Opcao = "3" ->
+        cancelarAluguel(Connection),
+        menuCliente;
      Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
 
@@ -197,5 +199,48 @@ realizarAluguel(Connection) :-
 
     ;
         writeln('Carro não encontrado.')
+    ).
+
+
+
+cancelarAluguel(Connection) :-
+    current_user_id(UserID),
+    iniciandoDatabase(Connection),
+    buscarAlugueisPorUsuario(Connection, UserID, Alugueis),
+    (   Alugueis = []
+    ->  writeln('Nenhum aluguel encontrado para este usuário.'),
+        menuCliente
+    ;   writeln('ID do Aluguel | ID do Carro | Valor Total'),
+        writeln('--------------------------------------------'),
+        maplist(printAluguelInfo, Alugueis),
+        writeln('Digite o ID do aluguel que deseja cancelar:'),
+        read_line_to_string(user_input, AluguelIDStr),
+        atom_number(AluguelIDStr, AluguelId),
+        writeln(''),
+        verificaTempoAluguel(Connection, AluguelId, Tempo),
+        (   Tempo =:= 0
+        ->  writeln('Aluguel possível de ser cancelado.'),
+            writeln(''),
+            writeln('Deseja confirmar o cancelamento desse aluguel?'),
+            writeln('1. Sim'),
+            writeln('2. Não'),
+            read_line_to_string(user_input, ConfirmaComNL), 
+            atom_chars(ConfirmaComNL, [ConfirmaChar|_]),    
+            (   ConfirmaChar = '1'
+            ->  Q1 = "UPDATE Alugueis SET status_aluguel = 'cancelado' WHERE id_aluguel = '%w'",
+                db_parameterized_query_no_return(Connection, Q1, [AluguelId]),
+                Q2 = "UPDATE carros SET status = 'D' WHERE id_carro = (SELECT id_carro FROM Alugueis WHERE id_aluguel = '%w')",
+                db_parameterized_query_no_return(Connection, Q2, [AluguelId]),
+                writeln('Aluguel cancelado com sucesso!'),
+                writeln(''),
+                menuCliente
+            ;   ConfirmaChar = '2'
+            ->  menuCliente
+            ;   writeln('Opção inválida. Por favor, escolha novamente.'),
+                menuCliente
+            )
+        ;   writeln('Aluguel não é possível ser cancelado, pois faz mais de um dia que o aluguel foi iniciado.')
+        ),
+        menuCliente
     ).
 

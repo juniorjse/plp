@@ -1,4 +1,4 @@
-:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4, alugar/5, getCarro/3]).
+:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4, alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3]).
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -53,3 +53,17 @@ alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
 getCarro(Connection, CarroID, CarroInfo) :-
     Q = "SELECT * FROM carros WHERE id_carro = '%w'",
     db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
+
+% buscarAlugueisPorUsuario/3
+buscarAlugueisPorUsuario(Connection, UserID, Alugueis) :-
+    Q = "SELECT id_aluguel, id_carro, valor_total FROM Alugueis WHERE id_usuario = '%w' AND status_aluguel = 'ativo'",
+    db_parameterized_query(Connection, Q, [UserID], Alugueis).
+
+% printAluguelInfo/1
+printAluguelInfo(row(IdAluguel, IdCarro, ValorTotal)) :-
+    format('~w             |       ~w     |        ~w~n', [IdAluguel, IdCarro, ValorTotal]).
+
+% verificaTempoAluguel/3
+verificaTempoAluguel(Connection, AluguelId, Tempo) :-
+    Q = "SELECT verificaTempoAluguel('%w')",
+    db_parameterized_query(Connection, Q, [AluguelId], [row(Tempo)]).
