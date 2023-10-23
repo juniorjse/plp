@@ -31,3 +31,6 @@ db_parameterized_query(Connection, Query, Parameters, Rows):-
 db_parameterized_query_no_return(Connection, Query, Parameters):-
     swritef(String, Query, Parameters),
     db_query_no_return(Connection, String).
+
+obterAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
+    getAlugueisPorPessoa(Connection, ClienteID, Alugueis).

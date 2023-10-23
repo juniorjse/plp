@@ -18,3 +18,10 @@ verify_cartegory([]).
 verify_cartegory([X|XS]):- verify_cartegory(XS), number_string(Y, X), Y < 15, Y > 0.
 
 strip(A,B):- split_string(A, "", "\s\t\n", [B]).
+
+isANumber(Number, String) :-
+    catch(
+        atom_number(String, Number),
+        _,
+        fail
+    ).
