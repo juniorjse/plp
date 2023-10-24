@@ -53,7 +53,9 @@ O projeto consiste em desenvolver um sistema de locadora de carros operado por t
 #### 🦉 PROLOG:
  
 1. Faça o download do [SWI_Prolog](https://www.swi-prolog.org/download/stable);  
-2. Se o seu PostgreSQL já estiver devidamente configurado, abra um terminal no diretório prolog\src e digite o comando `swipl run.pl` para executar a aplicação.
+2. Faça a instalação do [MSYS2](https://www.msys2.org/);
+3. Abra um terminal no diretório prolog\src, inicie o prolog com o comando `swipl` e rode o comando `pack_install(date_time).` para instalar o pacote;
+4. Se o seu PostgreSQL já estiver devidamente configurado, abra um terminal no diretório prolog\src e digite o comando `swipl run.pl` para executar a aplicação.
 
 
 ## 👩‍💻AUTORES👨‍💻
