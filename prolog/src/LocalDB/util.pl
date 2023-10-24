@@ -1,4 +1,6 @@
 :- module(util, [get_input/2, clear_screen/0]).
+:- discontiguous util:isANumber/2.
+
 
 get_input(Prompt, Input) :- 
     writeln(Prompt),

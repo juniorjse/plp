@@ -81,5 +81,6 @@ verificaTempoAluguel(Connection, AluguelId, Tempo) :-
 
 % getAlugueisPorPessoa/3
 getAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
-    Query = "SELECT c.marca, c.modelo, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Aluguéis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w", [ClienteID]),
+    Query = "SELECT c.marca, c.modelo, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Aluguéis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w",
     db_parameterized_query(Connection, Query, [ClienteID], Alugueis).
+
