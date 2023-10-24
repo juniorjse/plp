@@ -22,10 +22,10 @@ menuMecanica :-
     writeln(''),
     
     (
-    Opcao = "1" -> carrosPraReparo;
-    Opcao = "2" -> finalizarReparo;
+    Opcao = "1" -> carrosPraReparo,    menuMecanica;
+    Opcao = "2" -> finalizarReparo,    menuMecanica;
     Opcao = "0" -> writeln('Saindo...\n'), halt;
-    writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente
+    writeln('Opção inválida. Por favor, escolha novamente.'), menuMecanica
     ).
 
 carrosPraReparo :-
@@ -36,8 +36,7 @@ carrosPraReparo :-
     user_operations:consultarCarrosPraReparo(Connection,ListaCarros),
     mostraCarros(ListaCarros),
     writeln("|------------------------------------------------------------------------------|\n\n\n"),
-    connectiondb:encerrandoDatabase(Connection),
-    menuMecanica.
+    connectiondb:encerrandoDatabase(Connection).
 
 mostraCarros([]).  
 mostraCarros([row(Id, Marca, Modelo, Ano, Placa) | Outros]) :-
@@ -46,25 +45,24 @@ mostraCarros([row(Id, Marca, Modelo, Ano, Placa) | Outros]) :-
 
 finalizarReparo :-
     connectiondb:iniciandoDatabase(Connection),
+    user_operations:consultarCarrosPraReparo(Connection, Carros) ,
 
-    user_operations:consultarCarrosPraReparo(Connection, ListaCarros),
-
-    (ListaCarros = [] ->
+    (Carros = [] ->
         writeln('Não há carros em reparo para finalizar.');
-    listarCarrosReparo(ListaCarros, 1), % Função para listar os carros em reparo
+        carrosPraReparo, % Função para listar os carros em reparo
         writeln('Informe o ID do carro a ser finalizado o reparo:'),
-        read(CarroIdStr),
+        read_line_to_string(user_input, CarroIdStr),
         atom_number(CarroIdStr, CarroId),
         (
-            member(CarroId, ListaCarros) ->
+            user_operations:carroPraReparo(Connection, CarroId) ->
             writeln('Há algum valor a ser pago para o reparo? (0 para nenhum valor):'),
-            read(ValorReparoStr),
+            read_line_to_string(user_input, ValorReparoStr),
             atom_number(ValorReparoStr, ValorReparo),
         
-            dbop:db_parameterized_query(Connection, "SELECT id_aluguel FROM Alugueis WHERE id_carro = $1 AND status_aluguel = 'ativo'", [CarroId], [AluguelId]),
-            dbop:db_parameterized_query(Connection, "UPDATE Alugueis SET valor_total = valor_total + $1 WHERE id_aluguel = $2", [ValorReparo, AluguelId], _),
-            dbop:db_parameterized_query(Connection, "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = $1 AND status_aluguel = 'ativo'", [CarroId], _),
-            dbop:db_parameterized_query(Connection, "UPDATE Carros SET status = 'D' WHERE id_carro = $1", [CarroId], _),
+            dbop:db_parameterized_query(Connection, "SELECT id_aluguel FROM Alugueis WHERE id_carro = %w AND status_aluguel = 'ativo'", [CarroId], [row(AluguelId)]),
+            dbop:db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET valor_total = valor_total + %d WHERE id_aluguel = %d", [ValorReparo,AluguelId]),
+            dbop:db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = %w AND status_aluguel = 'ativo'", [CarroId]),
+            dbop:db_parameterized_query_no_return(Connection, "UPDATE Carros SET status = 'D' WHERE id_carro = %w", [CarroId]),
             
             (ValorReparo > 0 ->
                 writeln('Valor do reparo computado.');
@@ -76,10 +74,5 @@ finalizarReparo :-
 
     connectiondb:encerrandoDatabase(Connection).
 
-listarCarrosReparo([], _).
-listarCarrosReparo([Carro|Resto], N) :-
-    format('ID: ~w ~w\n', [N, Carro]),
-    N1 is N + 1,
-    listarCarrosReparo(Resto, N1).
 
 
