@@ -25,7 +25,7 @@ clienteExiste(Connection, ClienteID) :-
     db_parameterized_query(Connection, Q, [ClienteID], [row(CountRow)]),
 
     % Verificar se a contagem é maior que zero
-    (CountRow = row(Count), Count > 0).
+    (CountRow > 0),.
 
 getusuariosByEmail(Connection, [Email | T], usuariosTemp, usuarios) :-
     length(T, L),
@@ -81,5 +81,5 @@ verificaTempoAluguel(Connection, AluguelId, Tempo) :-
 
 % getAlugueisPorPessoa/3
 getAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
-    swritef(Query, "SELECT c.marca, c.modelo, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Aluguéis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w", [ClienteID]),
-    db_parameterized_query(Connection, Query, Alugueis).
+    Query = "SELECT c.marca, c.modelo, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Aluguéis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w", [ClienteID]),
+    db_parameterized_query(Connection, Query, [ClienteID], Alugueis).

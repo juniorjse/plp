@@ -24,7 +24,6 @@ menuLocadora :-
     otherwise -> writeln('Opção inválida. Tente novamente.')),
     menuLocadora.
 
-
 listarAlugueisPorPessoa :-
     writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
     util:get_input('', ClienteIDStr),
@@ -33,7 +32,7 @@ listarAlugueisPorPessoa :-
     (util:isANumber(ClienteID, ClienteIDStr) ->
         connectiondb:iniciandoDatabase(Connection),
         (clienteExiste(Connection, ClienteID) ->
-            obterAlugueisPorPessoa(Connection, ClienteID, Alugueis),
+            user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
             (length(Alugueis, NumRegistros), NumRegistros > 0 ->
                 writeln('Registros de Aluguéis:'),
                 mostrarRegistrosDeAlugueis(Connection, Alugueis)
@@ -53,15 +52,15 @@ mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
     mostrarRegistroDeAluguel(Connection, Registro),
     mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
 
-mostrarRegistroDeAluguel(Connection, Registro) :-
-    user_operations:getCarro(Connection, CarroID, CarroInfo), % Função que obtém informações do carro
-    user_operations:verificaTempoAluguel(Connection, Registro, DataInicio), % Função que verifica a data de início
-    user_operations:verificaTempoAluguel(Connection, Registro, DataDevolucao), % Função que verifica a data de devolução
-    user_operations:verificaTempoAluguel(Connection, Registro, Valor), % Função que verifica o valor
-    user_operations:verificaTempoAluguel(Connection, Registro, Status), % Função que verifica o status
-    writeln('Carro:               '), writeln(CarroInfo), % Imprime informações do carro
-    writeln('Data de Início:      '), writeln(DataInicio), % Imprime informações da data de início
-    writeln('Data de Devolução:   '), writeln(DataDevolucao), % Imprime informações da data de devolução
-    writeln('Valor do Aluguel:    R$ '), writeln(Valor), % Imprime informações do valor
-    writeln('Status do Aluguel:   '), writeln(Status), % Imprime informações do status
+mostrarRegistroDeAluguel(Connection, [AluguelID, CarroID | OutrasInformacoes]) :-
+    user_operations:getCarro(Connection, CarroID, CarroInfo), 
+    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataInicio), 
+    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataDevolucao), 
+    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Valor), 
+    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Status), 
+    writeln('Carro:               '), writeln(CarroInfo), 
+    writeln('Data de Início:      '), writeln(DataInicio), 
+    writeln('Data de Devolução:   '), writeln(DataDevolucao), 
+    writeln('Valor do Aluguel:    R$ '), writeln(Valor), 
+    writeln('Status do Aluguel:   '), writeln(Status), 
     writeln('').
