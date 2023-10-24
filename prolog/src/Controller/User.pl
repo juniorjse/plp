@@ -227,6 +227,7 @@ listarCarrosPorCategoria(Connection) :-
     writeln("Escolha a categoria de carro desejada (Exemplo: 3): "),
 
     read_line_to_string(user_input, Categoria),
+    writeln(''),
     buscarCarrosPorCategoria(Connection, Categoria).
 
 buscarCarrosPorCategoria(Connection, Categoria) :-
@@ -240,21 +241,20 @@ buscarCarrosPorCategoria(Connection, Categoria) :-
     Categoria = "8" -> CategoriaEscolhida = "Esportivo";
     Categoria = "9" -> CategoriaEscolhida = "Pickup";
     Categoria = "10" -> CategoriaEscolhida = "Elétrico";
-    writeln('Opção inválida. Por favor, escolha novamente.'), listarCarrosPorCategoria(Connection)),
+    writeln('Opção inválida. Por favor, escolha novamente.\n'), listarCarrosPorCategoria(Connection)),
     
     consultarCarrosPorCategoria(Connection, CategoriaEscolhida, Carros),
     
-    write('Carros disponíveis na categoria '),
-    writeln(Categoria),
+    writeln('|------------------------------------------------------------|'),
+     format('|------------ Carros disponíveis na categoria ~t~w ~t~2|-------------|\n',[Categoria]),
+    writeln('|------------------------------------------------------------|'),
 
     printCarros(Carros),
     menuCliente.
 
 printCarros([]).
 printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
-    write('ID: '), writeln(ID_Carro),
-    write('Marca: '), writeln(Marca),
-    write('Modelo: '), writeln(Modelo),
-    write('Ano: '), writeln(Ano),
+    format('|Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano: ~w|',[ ID_Carro, Marca, Modelo, Ano]),
     nl,
     printCarros(RestoCarros).
+

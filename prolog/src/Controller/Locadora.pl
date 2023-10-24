@@ -1,4 +1,4 @@
-:- module(Locadora, [menuLocadora/0]).
+:- module(Locadora, [menuLocadora/0,registrarDevolucao/0, printAluguel/4]).
 :- use_module(library(odbc)).
 :- use_module(util).
 :- use_module(dbop).
@@ -24,36 +24,36 @@ menuLocadora :-
      Opcao = "0" -> true;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
 
-registraDevolucao(Connection) :-
+registrarDevolucao :-
     writeln('Digite o número do contrato/Id do aluguel a ser encerrado:'),
     read_line_to_string(user_input, InputString),
     atom_number(InputString, NumContrato),
-    buscarAluguel(Connection, NumContrato, Contrato),
+    buscarAluguel(NumContrato, Contrato),
     (length(Contrato, 0) ->
         writeln('Aluguel não encontrado.'),
         writeln('1. Para digitar novamente'),
         writeln('2. Para voltar ao menu inicial'),
         read_line_to_string(user_input, Opcao),
-        (Opcao = "1" -> registraDevolucao(Connection);
-        Opcao = "2" -> menuLocadora(Connection);
-        writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora(Connection)));
+        (Opcao = "1" -> registrarDevolucao;
+        Opcao = "2" -> menuLocadora;
+        writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora));
     [Aluguel] = Contrato,
     ( Aluguel = (DataInicio, DataDevolucao, IDCarro, ValorTotal) ->
-        printAluguel(Connection, DataInicio, DataDevolucao, IDCarro, ValorTotal),
+        printAluguel( DataInicio, DataDevolucao, Carro_ID, ValorTotal),
         verificaDevolucao(DataDevolucao, Devolucao),
         ( Devolucao = "Devolução dentro do prazo" ->
-            printDevolucao(Connection, ValorTotal, IDCarro);
+            printDevolucao(ValorTotal, IDCarro);
             Devolucao = "Devolução adiantada" ->
             writeln('Motivo da devolução adiantada:'),
             writeln('1. Problema no carro'),
             writeln('2. Outro motivo'),
             read_line_to_string(user_input, Motivo),
-            (Motivo = "1" -> enviaParaMecanico(Connection, IDCarro), menuLocadora(Connection);
-             Motivo = "2" -> calculaValor(Connection, DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
-             printDevolucao(Connection, Valor, IDCarro), menuLocadora(Connection);
-             writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora(Connection));
-            calculaValor(Connection, DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
-            printDevolucao(Connection, Valor, IDCarro), menuLocadora(Connection)
+            (Motivo = "1" -> enviaParaMecanico(IDCarro), menuLocadora;
+             Motivo = "2" -> calculaValor( DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
+             printDevolucao(Valor, IDCarro), menuLocadora;
+             writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora);
+            calculaValor(DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
+            printDevolucao(Valor, IDCarro), menuLocadora
         )
     ).
 
