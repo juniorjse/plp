@@ -3,6 +3,7 @@
 :- use_module(util).
 :- use_module(dbop).
 :- use_module('./localdb/connectiondb').
+:- use_module(library(date_time)).
 
 menuLocadora :-
     writeln(''),
@@ -28,6 +29,7 @@ registrarDevolucao :-
     writeln('Digite o número do contrato/Id do aluguel a ser encerrado:'),
     read_line_to_string(user_input, InputString),
     atom_number(InputString, NumContrato),
+    Contrato = [row(DataInicio, DataDevolucao, IDCarro, ValorTotal)],
     buscarAluguel(NumContrato, Contrato),
     (length(Contrato, 0) ->
         writeln('Aluguel não encontrado.'),
@@ -36,23 +38,23 @@ registrarDevolucao :-
         read_line_to_string(user_input, Opcao),
         (Opcao = "1" -> registrarDevolucao;
         Opcao = "2" -> menuLocadora;
-        writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora));
-    [Aluguel] = Contrato,
-    ( Aluguel = (DataInicio, DataDevolucao, IDCarro, ValorTotal) ->
-        printAluguel( DataInicio, DataDevolucao, Carro_ID, ValorTotal),
+        writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora);
+
+        printAluguel( DataInicio, DataDevolucao, IDCarro),
         verificaDevolucao(DataDevolucao, Devolucao),
-        ( Devolucao = "Devolução dentro do prazo" ->
+        (Devolucao = "Devolução dentro do prazo" ->
             printDevolucao(ValorTotal, IDCarro);
-            Devolucao = "Devolução adiantada" ->
+        Devolucao = "Devolução adiantada" ->
             writeln('Motivo da devolução adiantada:'),
             writeln('1. Problema no carro'),
             writeln('2. Outro motivo'),
             read_line_to_string(user_input, Motivo),
             (Motivo = "1" -> enviaParaMecanico(IDCarro), menuLocadora;
-             Motivo = "2" -> calculaValor( DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
+             Motivo = "2" -> calculaValor( DataInicio, DataDevolucao, IDCarro, Valor), 
              printDevolucao(Valor, IDCarro), menuLocadora;
              writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora);
-            calculaValor(DataInicio, DataDevolucao, ValorTotal, IDCarro, Valor), 
+        writeln("---Devolução Atrasada---"),
+        calculaValor(DataInicio, DataDevolucao, IDCarro, Valor), 
             printDevolucao(Valor, IDCarro), menuLocadora
         )
     ).
@@ -64,45 +66,45 @@ buscarAluguel(NumContrato, Contrato) :-
 
 buscarCarro(IDCarro) :-
     connectiondb:iniciandoDatabase(Connection),
-    writeln("Detalhes do aluguel com ID " + IDCarro + ": "),
+    format("Detalhes do aluguel com ID ~w: \n", [IDCarro]),
+    Resultado = [row(Marca,Modelo,Ano)],
     dbop:db_parameterized_query(Connection, "SELECT marca, modelo, ano FROM Carros WHERE id_carro = '%w'", [IDCarro], Resultado),
     connectiondb:encerrandoDatabase(Connection),
     (
         Resultado = null ->
         writeln("Carro com ID " + IDCarro + " não encontrado.");  
         writeln("Detalhes do carro:"),
-        writeln("Marca: " + Resultado.marca),
-        writeln("Modelo: " + Resultado.modelo),
-        writeln("Ano: " + Resultado.ano)
+        writeln("Marca:" + Marca),
+        writeln("Modelo: " + Modelo),
+        writeln("Ano: " + Ano)
     ).
 
-printAluguel(DataInicio, DataDevolucao, IDCarro, ValorTotal) :-
+printAluguel(DataInicio, DataDevolucao, IDCarro) :-
     writeln("Carro Alugado: "),
     buscarCarro(IDCarro),
-    calculaValor(DataInicio, DataDevolucao, IDCarro, ValorTotal, Valor),
+    calculaValor(DataInicio, DataDevolucao, IDCarro, Valor),
     writeln("Data de início do aluguel: " + DataInicio),
     writeln("Data de devolução: " + DataDevolucao),
     writeln("Valor total do aluguel: R$ " + Valor).
 
-calculaValor(DataInicio, DataDevolucao, IDCarro, ValorTotal, Valor) :-
-    getCurrentTime(CurrentTime),
-    utctDay(CurrentTime, DataAtual),
-    diffDays(DataInicio, DataAtual, QtdDiasAlugados),
+calculaValor(DataInicio, DataDevolucao, IDCarro, Valor) :-
+    date_get(today, DataAtual),
+    date_interval(DataInicio, DataAtual, QtdDiasAlugados days),
     retornaDiaria(IDCarro, Diaria),
     Valor is -1 * QtdDiasAlugados * Diaria.
 
 retornaDiaria(IDCarro, Diaria) :- 
     connectiondb:iniciandoDatabase(Connection),
-    dbop:db_parameterized_query(Connection, "SELECT diaria_carro FROM Carros WHERE id_carro = '%w'", [IDCarro], Diaria),
+    dbop:db_parameterized_query(Connection, "SELECT diaria_carro FROM Carros WHERE id_carro = '%w'", [IDCarro], [row(Diaria)]),
     connectiondb:encerrandoDatabase(Connection).
 
 verificaDevolucao(DataDevolucao, Resultado) :-
-    getCurrentTime(CurrentTime),
-    utctDay(CurrentTime, CurrentDay),
+    date_get(today, CurrentDay),
+    date_interval(CurrentDay, DataDevolucao, QtdDias days),
     (
-        DataDevolucao == CurrentDay ->
+        QtdDias == 0 ->
         Resultado = "Devolução dentro do prazo";
-        DataDevolucao > CurrentDay ->
+        QtdDias < 0 ->
         Resultado = "Devolução adiantada";
         Resultado = "Devolução atrasada"
     ).
@@ -113,17 +115,23 @@ printDevolucao(Valor, IDCarro) :-
     writeln("1. Confirmar pagamento"),
     writeln("2. Cancelar"),
     read_line_to_string(user_input, ConfirmaPagamento),
-    processarPagamento(ConfirmaPagamento, Valor, IDCarro).
+    processarPagamento(ConfirmaPagamento, IDCarro, Valor).
 
-processarPagamento(_, _, _) :- 
-    writeln("Opção inválida. Você será direcionado(a) ao menu inicial."), menuLocadora.
-processarPagamento("1", Valor, IDCarro) :- 
+processarPagamento("1", IDCarro, ValorTotal) :- 
+    connectiondb:iniciandoDatabase(Connection),
     writeln("Pagamento realizado com sucesso!"), 
     writeln("Aluguel finalizado."),
-    db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = '%w' AND status_aluguel = 'ativo'", [ID_Carro]),
-    db_parameterized_query_no_return(Connection, "UPDATE Carros SET status = 'D' WHERE id_carro = '%w'", [ID_Carro]),
+    dbop:db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET status_aluguel = 'Concluído' WHERE id_carro = %w AND status_aluguel = 'ativo'", [IDCarro]),
+    dbop:db_parameterized_query_no_return(Connection, "UPDATE Carros SET status = 'D' WHERE id_carro = %w", [IDCarro]),
+    dbop:db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET valor_total = %w WHERE id_carro = %w", [ValorTotal, IDCarro]),
+    connectiondb:encerrandoDatabase(Connection),
     menuLocadora.
-processarPagamento("2", _, _) :- writeln("Operação cancelada!"), menuLocadora.
+processarPagamento("2", _) :- 
+    writeln("Operação cancelada!"), menuLocadora.
+processarPagamento(_, _) :- 
+    writeln("Opção inválida. Você será direcionado(a) ao menu inicial."), menuLocadora.
 
 enviaParaMecanico(IDCarro) :-
-    db_parameterized_query_no_return(Connection,  "UPDATE Carros SET status = 'R' WHERE id_carro = '%w'", [ID_Carro]).
+    connectiondb:iniciandoDatabase(Connection),
+    db_parameterized_query_no_return(Connection,  "UPDATE Carros SET status = 'R' WHERE id_carro = '%w'", [ID_Carro]),
+    connectiondb:encerrandoDatabase(Connection).
