@@ -1,4 +1,4 @@
-:- module(locadora, [menuLocadora/0, opcaoMenu/1, cadastrarCarro/0, listarAlugueisPorPessoa/0, confirmaCadastro/1]).
+:- module(locadora, [menuLocadora/0, opcaoMenu/1, cadastrarCarro/0, listarAlugueisPorPessoa/0, confirmaCadastro/1, removerCarro/0]).
 :- use_module(library(odbc)).
 :- use_module('./localdb/connectiondb').
 :- use_module('./localdb/dbop').
@@ -19,48 +19,51 @@ menuLocadora :-
     read_line_to_string(user_input, Opcao),
 
     (Opcao = "1" -> cadastrarCarro;
+    Opcao = "2" -> removerCarro;
     Opcao = "4" -> listarAlugueisPorPessoa;
     Opcao = "0" -> writeln('Saindo do sistema...'), halt; 
     otherwise -> writeln('Opção inválida. Tente novamente.')),
     menuLocadora.
 
-listarAlugueisPorPessoa :-
-    writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
-    util:get_input('', ClienteIDStr),
-    writeln(''),
-
-    (util:isANumber(ClienteID, ClienteIDStr) ->
-        connectiondb:iniciandoDatabase(Connection),
-        (clienteExiste(Connection, ClienteID) ->
-            user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
-            (length(Alugueis, NumRegistros), NumRegistros > 0 ->
-                writeln('Registros de Aluguéis:'),
-                mostrarRegistrosDeAlugueis(Connection, Alugueis)
-            ;
-                writeln('Não há registros de aluguéis para este cliente.')
-            ),
-            connectiondb:encerrandoDatabase(Connection)
-        ;
-            writeln('Cliente não encontrado na base de dados.')
-        )
-    ;
-        writeln('ID de cliente inválido. Tente novamente.')
-    ).
-
-mostrarRegistrosDeAlugueis(_, []).
-mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
-    mostrarRegistroDeAluguel(Connection, Registro),
-    mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
-
-mostrarRegistroDeAluguel(Connection, [AluguelID, CarroID | OutrasInformacoes]) :-
-    user_operations:getCarro(Connection, CarroID, CarroInfo), 
-    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataInicio), 
-    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataDevolucao), 
-    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Valor), 
-    user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Status), 
-    writeln('Carro:               '), writeln(CarroInfo), 
-    writeln('Data de Início:      '), writeln(DataInicio), 
-    writeln('Data de Devolução:   '), writeln(DataDevolucao), 
-    writeln('Valor do Aluguel:    R$ '), writeln(Valor), 
-    writeln('Status do Aluguel:   '), writeln(Status), 
-    writeln('').
+    removerCarro:-
+        get_connection(Connection),
+        writeln('Informe o ID do carro que deseja remover:'),
+        read_line_to_string(user_input, IdCarroString),
+        (isANumber(IdCarro, IdCarroString) ->
+            checkCarroStatus(Connection, IdCarro, Status),
+            (Status = 'O' ->
+                writeln('Este carro encontra-se alugado. Escolha outro ou retorne ao menu principal.');
+                Status = 'D' ->
+                    confirmarRemocao(Connection, IdCarro);
+                Status = 'R' ->
+                    writeln('Este carro está em reparo. Escolha outro ou retorne ao menu principal.');
+                otherwise ->
+                    writeln('Carro não encontrado.');
+            );
+            writeln('ID informado é inválido. Tente novamente.')
+        ),
+        encerrandoDatabase(Connection).
+    
+    confirmarRemocao(Connection, IdCarro):-
+        writeln('Deseja realmente remover este carro? (s/n):'),
+        read_line_to_string(user_input, Confirmacao),
+        (Confirmacao = "s" ->
+            removeCarro(Connection, IdCarro),
+            writeln('Carro removido com sucesso.');
+            Confirmacao = "n" ->
+                writeln('Remoção cancelada.');
+            otherwise ->
+                writeln('Opção inválida. Tente novamente.')
+        ).
+    
+    checkCarroStatus(Connection, IdCarro, Status):-
+        getCarro(Connection, IdCarro, [_, _, _, _, _, _, Status|_]).
+    
+    removeCarro(Connection, IdCarro):-
+        db_parameterized_query_no_return(
+            Connection, 
+            "DELETE FROM Carros WHERE id_carro = %w;",
+            [IdCarro]
+        ).
+    
+    :- initialization(menuLocadora).
