@@ -1,11 +1,9 @@
 :- module(Mecanica, [menuMecanica/0, carrosPraReparo/0, mostraCarros/1, carrosPraReparo/0, mostraCarros/1,
- finalizarReparo/0, listarCarrosReparo/2]).
+                     finalizarReparo/0, listarCarrosReparo/2]).
 :- use_module(library(odbc)).
 :- use_module(util).
 :- use_module('./localdb/connectiondb').
-:- use_module('./localdb/'./localdb/connectiondb').
 :- use_module('./localdb/dbop').
-:- use_module('./localdb/user_operations'').
 :- use_module('./localdb/user_operations').
 
 menuMecanica :-
