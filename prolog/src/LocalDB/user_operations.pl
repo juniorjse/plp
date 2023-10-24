@@ -101,3 +101,28 @@ createCar(Connection, Marca, Modelo, Ano, Placa, Categoria, Diaria, Descricao) :
     writeln("\nEsse carro já foi cadastrado no sistema! Tente novamente.")
     ).
 
+%diz se o carro esta para reparo ou não 
+carroPraReparo(Connection, ID) :-
+    db_parameterized_query(
+        Connection, 
+        "SELECT id_carro FROM carros WHERE status = 'R' and id_carro = %w",
+        [ID], 
+        [row(Count)]),
+    (Count > 0).
+    
+
+consultarCarrosPraReparo(Connection, Carros) :-
+    db_query(
+        Connection, 
+        "SELECT id_carro, marca, modelo, ano, placa FROM carros WHERE status = 'R'", 
+        Carros).
+
+%diz se o carro esta para reparo ou não 
+carroPraReparo(Connection, ID) :-
+    db_parameterized_query(
+        Connection, 
+        "SELECT id_carro FROM carros WHERE status = 'R' and id_carro = %w",
+        [ID], 
+        [row(Count)]),
+    (Count > 0).
+    
