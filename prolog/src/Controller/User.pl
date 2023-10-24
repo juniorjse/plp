@@ -1,4 +1,5 @@
-:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4, menuCliente/0]).
+:- module(usuarios, [solicitarCadastro/0, login/0, menu/0, usuario/4, menuCliente/0,
+            listarCarrosPorCategoria/1, printCarros/1]).
 :- use_module(library(odbc)).
 :- use_module('./localdb/connectiondb').
 :- use_module('./localdb/dbop').
@@ -82,6 +83,7 @@ menuCliente :-
     writeln('|4. Ranking de Carros Mais Alugados  |'),
     writeln('|0. Sair                             |'),
     writeln(''),
+    writeln('0. Sair'),
     writeln('Escolha uma opção:'),
 
     read_line_to_string(user_input, Opcao),
@@ -224,4 +226,56 @@ mostraCarros([]).
 mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
     format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
     mostraCarros(Outros).
+
+consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
+    connectiondb:iniciandoDatabase(Connection),
+    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = '%w' AND status = 'D'", [Categoria], Carros),
+    connectiondb:encerrandoDatabase(Connection).
+
+listarCarrosPorCategoria(Connection) :-
+    writeln("Opções de Categoria:"),
+    writeln("1. Econômico"),
+    writeln("2. Intermediário"),
+    writeln("3. SUV"),
+    writeln("4. Luxo"),
+    writeln("5. Minivan"),
+    writeln("6. Sedan"),
+    writeln("7. Conversível"),
+    writeln("8. Esportivo"),
+    writeln("9. Pickup"),
+    writeln("10. Elétrico"),
+    writeln(""),
+    writeln("Escolha a categoria de carro desejada (Exemplo: 3): "),
+
+    read_line_to_string(user_input, Categoria),
+    writeln(''),
+    buscarCarrosPorCategoria(Connection, Categoria).
+
+buscarCarrosPorCategoria(Connection, Categoria) :-
+    (Categoria = "1" -> CategoriaEscolhida = "Econômico";
+    Categoria = "2" -> CategoriaEscolhida = "Intermediário";
+    Categoria = "3" -> CategoriaEscolhida = "SUV";
+    Categoria = "4" -> CategoriaEscolhida = "Luxo";
+    Categoria = "5" -> CategoriaEscolhida = "Minivan";
+    Categoria = "6" -> CategoriaEscolhida = "Sedan";
+    Categoria = "7" -> CategoriaEscolhida = "Conversível";
+    Categoria = "8" -> CategoriaEscolhida = "Esportivo";
+    Categoria = "9" -> CategoriaEscolhida = "Pickup";
+    Categoria = "10" -> CategoriaEscolhida = "Elétrico";
+    writeln('Opção inválida. Por favor, escolha novamente.\n'), listarCarrosPorCategoria(Connection)),
+    
+    consultarCarrosPorCategoria(Connection, CategoriaEscolhida, Carros),
+    
+    writeln('|------------------------------------------------------------|'),
+     format('|------------ Carros disponíveis na categoria ~t~w ~t~2|-------------|\n',[Categoria]),
+    writeln('|------------------------------------------------------------|'),
+
+    printCarros(Carros),
+    menuCliente.
+
+printCarros([]).
+printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
+    format('|Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano: ~w|',[ ID_Carro, Marca, Modelo, Ano]),
+    nl,
+    printCarros(RestoCarros).
 
