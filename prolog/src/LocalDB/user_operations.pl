@@ -25,7 +25,7 @@ clienteExiste(Connection, ClienteID) :-
     db_parameterized_query(Connection, Q, [ClienteID], [row(CountRow)]),
 
     % Verificar se a contagem é maior que zero
-    (CountRow > 0),.
+    (CountRow > 0).
 
 getusuariosByEmail(Connection, [Email | T], usuariosTemp, usuarios) :-
     length(T, L),
@@ -62,12 +62,12 @@ alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
     ).
 
 getCarro(Connection, CarroID, CarroInfo) :-
-    Q = "SELECT * FROM carros WHERE id_carro = '%w'",
-    db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
+    Q = "SELECT marca, modelo, ano FROM carros WHERE id_carro = %w",
+    db_parameterized_query(Connection, Q, [CarroID], CarroInfo), writeln(CarroInfo).
 
 % buscarAlugueisPorUsuario/3
 buscarAlugueisPorUsuario(Connection, UserID, Alugueis) :-
-    Q = "SELECT id_aluguel, id_carro, valor_total FROM Aluguéis WHERE id_usuario = '%w' AND status_aluguel = 'ativo'",
+    Q = "SELECT id_aluguel, id_carro, valor_total FROM Alugueis WHERE id_usuario = '%w' AND status_aluguel = 'ativo'",
     db_parameterized_query(Connection, Q, [UserID], Alugueis).
 
 % printAluguelInfo/1
@@ -81,6 +81,6 @@ verificaTempoAluguel(Connection, AluguelId, Tempo) :-
 
 % getAlugueisPorPessoa/3
 getAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
-    Query = "SELECT c.marca, c.modelo, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Aluguéis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w",
+    Query = "SELECT c.id_carro, c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w",
     db_parameterized_query(Connection, Query, [ClienteID], Alugueis).
 

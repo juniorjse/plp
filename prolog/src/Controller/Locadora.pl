@@ -53,15 +53,13 @@ menuLocadora :-
         mostrarRegistroDeAluguel(Connection, Registro),
         mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
     
-    mostrarRegistroDeAluguel(Connection, [AluguelID, CarroID | OutrasInformacoes]) :-
-        user_operations:getCarro(Connection, CarroID, CarroInfo), 
-        user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataInicio), 
-        user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], DataDevolucao), 
-        user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Valor), 
-        user_operations:verificaTempoAluguel(Connection, [AluguelID | OutrasInformacoes], Status), 
-        writeln('Carro:               '), writeln(CarroInfo), 
-        writeln('Data de Início:      '), writeln(DataInicio), 
-        writeln('Data de Devolução:   '), writeln(DataDevolucao), 
-        writeln('Valor do Aluguel:    R$ '), writeln(Valor), 
-        writeln('Status do Aluguel:   '), writeln(Status), 
+    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio, DataDevolucao, Valor, Status)) :-
+        writeln('|-------Carro-------|'),
+        write('Marca:               '), writeln(Marca),
+        write('Modelo:              '), writeln(Modelo),
+        write('Ano:                 '), writeln(Ano),
+        write('Data de Início:      '), writeln(DataInicio), 
+        write('Data de Devolução:   '), writeln(DataDevolucao), 
+        write('Valor do Aluguel: R$ '), writeln(Valor), 
+        write('Status do Aluguel:   '), writeln(Status), 
         writeln('').
