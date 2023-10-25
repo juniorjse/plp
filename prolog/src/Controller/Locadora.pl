@@ -28,7 +28,7 @@ menuLocadora :-
     (Opcao = "1" -> cadastrarCarro, menuLocadora;
      Opcao = "2" -> removerCarro, menuLocadora;
      Opcao = "3" -> registrarDevolucao;
-     Opcao = "4" -> registroDeAluguelPorPessoa, menuLocadora;
+     Opcao = "4" -> listarAlugueisPorPessoa, menuLocadora;
      Opcao = "5" -> menuDashboard, menuLocadora;
      Opcao = "0" -> writeln('Saindo...'), writeln(''), halt;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
@@ -211,101 +211,89 @@ menuDashboard :-
     writeln('Escolha uma opção (ou digite qualquer outra coisa para voltar ao menu principal):'),
     read_line_to_string(user_input, Opcao),
     writeln(''),
-    menuOpcao(Opcao, Connection).
-
-menuOpcao("1", Connection) :- exibirReceitaTotal(Connection).
-menuOpcao("2", Connection) :- exibirNumeroDeAlugueis(Connection).
-menuOpcao("3", Connection) :- exibirTotalDeCarros(Connection).
-menuOpcao("4", Connection) :- exibirCarrosMaisDefeituosos(Connection).
-menuOpcao("5", Connection) :- exibirAlugueisPorCategoria(Connection).
-
-menuOpcao(_, Connection) :-
-    writeln('Dígito inválido. Voltando ao menu principal.'),
-    menuLocadora.
+    (Opcao = "1" -> exibirReceitaTotal(Connection)          ;
+    Opcao = "2" -> exibirNumeroDeAlugueis(Connection)       ;
+    Opcao = "3" -> exibirTotalDeCarros(Connection)          ;
+    Opcao = "4" -> exibirCarrosMaisDefeituosos(Connection)  ;
+    Opcao = "5" -> exibirAlugueisPorCategoria(Connection)   ;
+    writeln('Dígito inválido. Voltando ao menu principal.'), menuLocadora),
+    connectiondb:encerrandoDatabase(Connection).
 
 calcularReceitaTotal(Connection, Total) :-
-    odbc_query(Connection, 'SELECT SUM(valor_total) FROM Alugueis', row([Total])).
+    db_query(Connection, 'SELECT SUM(valor_total) FROM Alugueis', [row(Total)]).
 
 contarAlugueis(Connection, Count) :-
-    odbc_query(Connection, 'SELECT COUNT(*) FROM Alugueis', row([Count])).
+    db_query(Connection, 'SELECT COUNT(*) FROM Alugueis', [row(Count)]).
 
 contarCarros(Connection, Count) :-
-    odbc_query(Connection, 'SELECT COUNT(*) FROM Carros', row([Count])).
+    db_query(Connection, 'SELECT COUNT(*) FROM Carros', [row(Count)]).
 
 listarCarrosMaisDefeituosos(Connection, Carros) :-
-    odbc_query(Connection, 'SELECT marca, modelo FROM Carros WHERE status = ''R''', rows(Carros)).
+    db_query(Connection, "SELECT marca, modelo FROM Carros WHERE status = 'R'", [rows(Carros)]).
 
 listarAlugueisPorCategoria(Connection, Alugueis) :-
-    odbc_query(Connection, 'SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria', rows(Alugueis)).
+    db_query(Connection, 'SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria', [rows(Alugueis)]).
 
 exibirReceitaTotal(Connection) :-
     calcularReceitaTotal(Connection, Total),
-    writeln('Receita Total: '),
-    write(Total),
-    menuDashboard(Connection).
+    format('| Receita Total: ~w~n', [Total]),
+    menuDashboard.
 
 exibirNumeroDeAlugueis(Connection) :-
     contarAlugueis(Connection, Count),
-    writeln('Número de Aluguéis: '),
-    write(Count),
-    menuDashboard(Connection).
+    format('| Número de Aluguéis: ~w~n', [Count]),
+    menuDashboard.
 
 exibirTotalDeCarros(Connection) :-
     contarCarros(Connection, Count),
-    writeln('Total de Carros: '),
-    write(Count),
-    menuDashboard(Connection).
+    format('| Total de Carros: ~w~n', [Count]),
+    menuDashboard.
 
 exibirCarrosMaisDefeituosos(Connection) :-
     listarCarrosMaisDefeituosos(Connection, Carros),
-    writeln('Carros mais defeituosos:'),
-    maplist(writeCarro, Carros),
-    menuDashboard(Connection).
+    format('| Carros mais defeituosos: ~w~n', [Carros]),
+    menuDashboard.
 
 exibirAlugueisPorCategoria(Connection) :-
     listarAlugueisPorCategoria(Connection, Alugueis),
-    writeln('Aluguéis por Categoria:'),
-    maplist(writeCategoria, Alugueis),
-    menuDashboard(Connection).
-
-connectiondb:encerrandoDatabase(Connection).
+    format('| Aluguéis por Categoria: ~w~n', [Alugueis]),
+    menuDashboard.
 
 
-    listarAlugueisPorPessoa :-
-        writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
-        util:get_input('', ClienteIDStr),
-        writeln(''),
-    
-        (util:isANumber(ClienteID, ClienteIDStr) ->
-            connectiondb:iniciandoDatabase(Connection),
-            (clienteExiste(Connection, ClienteID) ->
-                user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
-                (length(Alugueis, NumRegistros), NumRegistros > 0 ->
-                    writeln('Registros de Aluguéis:'),
-                    mostrarRegistrosDeAlugueis(Connection, Alugueis)
-                ;
-                    writeln('Não há registros de aluguéis para este cliente.')
-                ),
-                connectiondb:encerrandoDatabase(Connection)
+%REGISTRO_ALUGUEL_PESSOA
+listarAlugueisPorPessoa :-
+    writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
+    util:get_input('', ClienteIDStr),
+    writeln(''),
+
+    (util:isANumber(ClienteID, ClienteIDStr) ->
+        connectiondb:iniciandoDatabase(Connection),
+        (clienteExiste(Connection, ClienteID) ->
+            user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
+            (length(Alugueis, NumRegistros), NumRegistros > 0 ->
+                writeln('|REGISTRO DE ALUGUEIS\n'),
+                mostrarRegistrosDeAlugueis(Connection, Alugueis)
             ;
-                writeln('Cliente não encontrado na base de dados.')
-            )
+                writeln('Não há registros de aluguéis para este cliente.')
+            ),
+            connectiondb:encerrandoDatabase(Connection)
         ;
-            writeln('ID de cliente inválido. Tente novamente.')
-        ).
-    
-    mostrarRegistrosDeAlugueis(_, []).
-    mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
-        mostrarRegistroDeAluguel(Connection, Registro),
-        mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
-    
-    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio, DataDevolucao, Valor, Status)) :-
-        writeln('|-------Carro-------|'),
-        write('Marca:               '), writeln(Marca),
-        write('Modelo:              '), writeln(Modelo),
-        write('Ano:                 '), writeln(Ano),
-        write('Data de Início:      '), writeln(DataInicio), 
-        write('Data de Devolução:   '), writeln(DataDevolucao), 
-        write('Valor do Aluguel: R$ '), writeln(Valor), 
-        write('Status do Aluguel:   '), writeln(Status), 
-        writeln('').
+            writeln('Cliente não encontrado na base de dados.')
+        )
+    ;
+        writeln('ID de cliente inválido. Tente novamente.')
+    ).
+
+mostrarRegistrosDeAlugueis(_, []).
+mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
+    mostrarRegistroDeAluguel(Connection, Registro),
+    mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
+
+mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio, DataDevolucao, Valor, Status)) :-
+    DataInicio = date(YI,MI,DI),
+    DataDevolucao = date(YD,MD,DD),
+    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w~n', [Marca,Modelo,Ano]),
+    format('|Início: ~w/~w/~w    Devolução: ~w/~w/~w~n', [DI,MI,YI,DD,MD,YD]), 
+    format('|Valor:  R$ ~w~n', [Valor]),
+    format('|Status:   ~w~n', [Status]),
+    writeln('').

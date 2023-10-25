@@ -142,4 +142,3 @@ carroPraReparo(Connection, ID) :-
         [row(Count)]),
     (Count > 0).
     
-
