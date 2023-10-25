@@ -1,4 +1,4 @@
-:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4, alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3]).
+
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
 :- use_module('./dbop.pl').
@@ -19,31 +19,41 @@ userAlreadyExists(Connection, Email, Confirmacao):-
     getUserByEmail(Connection, Email, User),
     length(User, Confirmacao).
 
+clienteExiste(Connection, ClienteID) :-
+    Q = "SELECT COUNT(*) FROM usuarios WHERE id_usuario = %w",
+    db_parameterized_query(Connection, Q, [ClienteID], [row(CountRow)]),
 
-getusuariosByEmail(Connection, [ Email | T ], usuariosTemp, usuarios):-
+    % Verificar se a contagem é maior que zero
+    (CountRow > 0).
+
+getusuariosByEmail(Connection, [Email | T], usuariosTemp, usuarios) :-
     length(T, L),
     (L > 0 ->
         getUserByEmail(Connection, Email, User),
-        getusuariosByEmail(Connection, T, [ User | usuariosTemp ], usuarios) ;
-        getUserByEmail(Connection, Email, User),
-        reverse([ User | usuariosTemp ], usuarios)
+        getusuariosByEmail(Connection, T, [User | usuariosTemp], usuarios);
+     getUserByEmail(Connection, Email, User),
+     reverse([User | usuariosTemp], usuarios)
     ).
-createUser(Connection, Email, Senha, Nome, Sobrenome, Confirmacao):-
+
+createUser(Connection, Email, Senha, Nome, Sobrenome, Confirmacao) :-
     userAlreadyExists(Connection, Email, Fstconf),
-    ( Fstconf =:= 0 ->
+    (Fstconf =:= 0 ->
         db_parameterized_query_no_return(
             Connection, 
             "INSERT INTO usuarios (nome, sobrenome, email, senha) values ('%w','%w','%w','%w');",
-            [ Nome, Sobrenome, Email, Senha]),
+            [Nome, Sobrenome, Email, Senha]
+        ),
         Confirmacao is 1;
-        Confirmacao is 0).
+     Confirmacao is 0
+    ).
+
 alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
     db_parameterized_query_no_return(
         Connection, 
-        "INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (%w, %w, CURRENT_DATE, CURRENT_DATE + interval '%w day', %w, 'ativo');",
+        "INSERT INTO alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel) VALUES (%w, %w, current_date, current_date + interval '%w day', %w, 'ativo');",
         [CarroID, UserID, DiasAluguel, ValorTotal]
     ),
-    % Atualizar o status do carro para 'O' (ou o status apropriado) na tabela "carros"
+    % Atualizar o status do carro para 'O' (ou o status apropriado) na tabela "Carros"
     db_parameterized_query_no_return(
         Connection, 
         "UPDATE carros SET status = 'O' WHERE id_carro = %w;",
@@ -51,8 +61,6 @@ alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
     ).
 
 getCarro(Connection, CarroID, CarroInfo) :-
-    Q = "SELECT * FROM carros WHERE id_carro = '%w'",
-    db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
 
 % buscarAlugueisPorUsuario/3
 buscarAlugueisPorUsuario(Connection, UserID, Alugueis) :-
@@ -67,3 +75,4 @@ printAluguelInfo(row(IdAluguel, IdCarro, ValorTotal)) :-
 verificaTempoAluguel(Connection, AluguelId, Tempo) :-
     Q = "SELECT verificaTempoAluguel('%w')",
     db_parameterized_query(Connection, Q, [AluguelId], [row(Tempo)]).
+
