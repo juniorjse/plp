@@ -25,41 +25,58 @@ menuLocadora :-
     otherwise -> writeln('Opção inválida. Tente novamente.')),
     menuLocadora.
 
-    listarAlugueisPorPessoa :-
-        writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
-        util:get_input('', ClienteIDStr),
-        writeln(''),
-    
-        (util:isANumber(ClienteID, ClienteIDStr) ->
-            connectiondb:iniciandoDatabase(Connection),
-            (clienteExiste(Connection, ClienteID) ->
-                user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
-                (length(Alugueis, NumRegistros), NumRegistros > 0 ->
-                    writeln('Registros de Aluguéis:'),
-                    mostrarRegistrosDeAlugueis(Connection, Alugueis)
-                ;
-                    writeln('Não há registros de aluguéis para este cliente.')
-                ),
-                connectiondb:encerrandoDatabase(Connection)
+listarAlugueisPorPessoa :-
+    writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
+    util:get_input('', ClienteIDStr),
+    writeln(''),
+
+    (util:isANumber(ClienteID, ClienteIDStr) ->
+        connectiondb:iniciandoDatabase(Connection),
+        (clienteExiste(Connection, ClienteID) ->
+            user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
+            (length(Alugueis, NumRegistros), NumRegistros > 0 ->
+                writeln('Registros de Aluguéis:'),
+                mostrarRegistrosDeAlugueis(Connection, Alugueis)
             ;
-                writeln('Cliente não encontrado na base de dados.')
-            )
+                writeln('Não há registros de aluguéis para este cliente.')
+            ),
+            connectiondb:encerrandoDatabase(Connection)
         ;
-            writeln('ID de cliente inválido. Tente novamente.')
-        ).
-    
-    mostrarRegistrosDeAlugueis(_, []).
-    mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
-        mostrarRegistroDeAluguel(Connection, Registro),
-        mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
-    
-    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Modelo, Ano, DataInicio, DataDevolucao, Valor, Status)) :-
-        writeln('|-------Carro-------|'),
-        write('Marca:               '), writeln(Marca),
-        write('Modelo:              '), writeln(Modelo),
-        write('Ano:                 '), writeln(Ano),
-        write('Data de Início:      '), writeln(DataInicio), 
-        write('Data de Devolução:   '), writeln(DataDevolucao), 
-        write('Valor do Aluguel: R$ '), writeln(Valor), 
-        write('Status do Aluguel:   '), writeln(Status), 
-        writeln('').
+            writeln('Cliente não encontrado na base de dados.')
+        )
+    ;
+        writeln('ID de cliente inválido. Tente novamente.')
+    ).
+
+mostrarRegistrosDeAlugueis(_, []).
+mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
+    mostrarRegistroDeAluguel(Connection, Registro),
+    mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
+
+mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Modelo, Ano, DataInicio, DataDevolucao, Valor, Status)) :-
+    writeln('|-------Carro-------|'),
+    write('Marca:               '), writeln(Marca),
+    write('Modelo:              '), writeln(Modelo),
+    write('Ano:                 '), writeln(Ano),
+    write('Data de Início:      '), writeln(DataInicio), 
+    write('Data de Devolução:   '), writeln(DataDevolucao), 
+    write('Valor do Aluguel: R$ '), writeln(Valor), 
+    write('Status do Aluguel:   '), writeln(Status), 
+    writeln('').
+
+removerCarro :-
+    writeln('Digite o ID do carro que deseja remover:'),
+    util:get_input('', CarroIDStr),
+
+    (util:isANumber(CarroID, CarroIDStr) ->
+        connectiondb:iniciandoDatabase(Connection),
+        (carroExiste(Connection, CarroID) ->
+            user_operations:removeCarro(Connection, CarroID),
+            writeln('Carro removido com sucesso.')
+        ;
+            writeln('Carro não encontrado na base de dados.')
+        ),
+        connectiondb:encerrandoDatabase(Connection)
+    ;
+        writeln('ID de carro inválido. Tente novamente.')
+    ).

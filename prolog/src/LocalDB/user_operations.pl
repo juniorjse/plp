@@ -1,4 +1,20 @@
-:- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4, alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3, getAlugueisPorPessoa/3, clienteExiste/2]).
+:- module(user_operations, [
+    createUser/6,
+    getUserByEmail/3,
+    getTipoByEmail/3,
+    getUser/4,
+    userAlreadyExists/3,
+    getusuariosByEmail/4,
+    alugar/5,
+    getCarro/3,
+    buscarAlugueisPorUsuario/3,
+    printAluguelInfo/1,
+    verificaTempoAluguel/3,
+    getAlugueisPorPessoa/3,
+    clienteExiste/2,
+    removeCarro/2,
+    carroExiste/2
+]).
 
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
@@ -24,7 +40,6 @@ clienteExiste(Connection, ClienteID) :-
     Q = "SELECT COUNT(*) FROM usuarios WHERE id_usuario = %w",
     db_parameterized_query(Connection, Q, [ClienteID], [row(CountRow)]),
 
-    % Verificar se a contagem é maior que zero
     (CountRow > 0).
 
 getusuariosByEmail(Connection, [Email | T], usuariosTemp, usuarios) :-
@@ -63,7 +78,7 @@ alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
 
 getCarro(Connection, CarroID, CarroInfo) :-
     Q = "SELECT marca, modelo, ano FROM carros WHERE id_carro = %w",
-    db_parameterized_query(Connection, Q, [CarroID], CarroInfo), writeln(CarroInfo).
+    db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
 
 % buscarAlugueisPorUsuario/3
 buscarAlugueisPorUsuario(Connection, UserID, Alugueis) :-
@@ -84,3 +99,17 @@ getAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
     Query = "SELECT c.id_carro, c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w",
     db_parameterized_query(Connection, Query, [ClienteID], Alugueis).
 
+% removeCarro/2
+removeCarro(Connection, IdCarro):-
+    dbop:db_parameterized_query_no_return(
+        Connection, 
+        "DELETE FROM Carros WHERE id_carro = %w;",
+        [IdCarro]
+    ).
+
+% carroExiste/2
+carroExiste(Connection, CarroID) :-
+    Q = "SELECT COUNT(*) FROM carros WHERE id_carro = %w",
+    db_parameterized_query(Connection, Q, [CarroID], [row(CountRow)]),
+
+    (CountRow > 0).
