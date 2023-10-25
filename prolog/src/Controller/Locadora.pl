@@ -272,11 +272,6 @@ exibirAlugueisPorCategoria(Connection) :-
     mostraAlugueisPorCategoria(Alugueis),
     menuDashboard.
 
-exibirAlugueisPorCategoria(Connection) :-
-    listarAlugueisPorCategoria(Connection, Alugueis),
-    format('| Aluguéis por Categoria: ~w~n', [Alugueis]),
-    menuDashboard.
-
 
 %REGISTRO_ALUGUEL_PESSOA
 listarAlugueisPorPessoa :-
