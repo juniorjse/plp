@@ -1,6 +1,9 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
                             createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2, consultarCarrosPraReparo/2,
-                            alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3, getAlugueisPorPessoa/3, clienteExiste/2]).
+                            alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3, getAlugueisPorPessoa/3, clienteExiste/2,
+    removeCarro/2,
+    carroExiste/2,
+    getCarroStatus/3]).
 
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
@@ -26,7 +29,6 @@ clienteExiste(Connection, ClienteID) :-
     Q = "SELECT COUNT(*) FROM usuarios WHERE id_usuario = %w",
     db_parameterized_query(Connection, Q, [ClienteID], [row(CountRow)]),
 
-    % Verificar se a contagem é maior que zero
     (CountRow > 0).
 
 getusuariosByEmail(Connection, [Email | T], usuariosTemp, usuarios) :-
@@ -142,3 +144,22 @@ carroPraReparo(Connection, ID) :-
         [row(Count)]),
     (Count > 0).
     
+
+% removeCarro/2
+removeCarro(Connection, IdCarro):-
+    dbop:db_parameterized_query_no_return(
+        Connection, 
+        "DELETE FROM Carros WHERE id_carro = %w;",
+        [IdCarro]
+    ).
+
+% carroExiste/2
+carroExiste(Connection, CarroID) :-
+    Q = "SELECT COUNT(*) FROM carros WHERE id_carro = %w",
+    db_parameterized_query(Connection, Q, [CarroID], [row(CountRow)]),
+
+    (CountRow > 0).
+
+getCarroStatus(Connection, CarroID, Status) :-
+    Q = "SELECT status FROM carros WHERE id_carro = %w",
+    db_parameterized_query(Connection, Q, [CarroID], [row(Status)]).

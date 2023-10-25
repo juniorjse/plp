@@ -310,3 +310,51 @@ mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio
     format('|Valor:  R$ ~w~n', [Valor]),
     format('|Status:   ~w~n', [Status]),
     writeln('').
+listarAlugueisPorPessoa :-
+    writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
+    util:get_input('', ClienteIDStr),
+    writeln(''),
+
+    (util:isANumber(ClienteID, ClienteIDStr) ->
+        connectiondb:iniciandoDatabase(Connection),
+        (clienteExiste(Connection, ClienteID) ->
+            user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
+            (length(Alugueis, NumRegistros), NumRegistros > 0 ->
+                writeln('Registros de Aluguéis:'),
+                mostrarRegistrosDeAlugueis(Connection, Alugueis)
+            ;
+                writeln('Não há registros de aluguéis para este cliente.')
+            ),
+            connectiondb:encerrandoDatabase(Connection)
+        ;
+            writeln('Cliente não encontrado na base de dados.')
+        )
+    ;
+        writeln('ID de cliente inválido. Tente novamente.')
+    ).
+removerCarro :-
+    writeln('Digite o ID do carro que deseja remover:'),
+    util:get_input('', CarroIDStr),
+
+    (util:isANumber(CarroID, CarroIDStr) ->
+        connectiondb:iniciandoDatabase(Connection),
+        (carroExiste(Connection, CarroID) ->
+            user_operations:getCarroStatus(Connection, CarroID, Status),  
+            (Status = 'O' ->  
+                writeln('Este carro no momento encontra-se alugado... Escolha outro ou retorne ao menu principal.')
+            ;
+                writeln('Confirma a remoção do carro? (s/n):'),
+                read_line_to_string(user_input, ConfirmaRemocao),
+                (ConfirmaRemocao = "s" ->  
+                    user_operations:removeCarro(Connection, CarroID),
+                    writeln('Carro removido com sucesso.');
+                    writeln('Remoção cancelada.')  
+                )
+            )
+        ;
+            writeln('ID informado é inexistente ou incorreto.')  
+        ),
+        connectiondb:encerrandoDatabase(Connection)
+    ;
+        writeln('ID de carro inválido. Tente novamente.')
+    ).
