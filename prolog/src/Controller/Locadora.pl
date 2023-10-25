@@ -229,10 +229,20 @@ contarCarros(Connection, Count) :-
     db_query(Connection, 'SELECT COUNT(*) FROM Carros', [row(Count)]).
 
 listarCarrosMaisDefeituosos(Connection, Carros) :-
-    db_query(Connection, "SELECT marca, modelo FROM Carros WHERE status = 'R'", [rows(Carros)]).
+    db_query(Connection, "SELECT marca, modelo FROM Carros WHERE status = 'R'", Carros).
 
 listarAlugueisPorCategoria(Connection, Alugueis) :-
-    db_query(Connection, 'SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria', [rows(Alugueis)]).
+    db_query(Connection, 'SELECT categoria, COUNT(*) FROM Alugueis JOIN Carros ON Alugueis.id_carro = Carros.id_carro GROUP BY categoria ORDER BY count DESC', Alugueis).
+
+mostraCarrosDefeituosos([]).  
+mostraCarrosDefeituosos([row( Marca,Modelo) | Outros]) :-
+    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+~n',[Marca, Modelo]),
+    mostraCarros(Outros).
+    
+mostraAlugueisPorCategoria([]).
+mostraAlugueisPorCategoria([row(Categoria, Qtd)|Outros]) :-
+    format('|~t ~w: ~t~20+ ~w ~n',[Categoria, Qtd]),
+    mostraAlugueisPorCategoria(Outros).
 
 exibirReceitaTotal(Connection) :-
     calcularReceitaTotal(Connection, Total),
@@ -250,13 +260,16 @@ exibirTotalDeCarros(Connection) :-
     menuDashboard.
 
 exibirCarrosMaisDefeituosos(Connection) :-
+writeln('entra aqui'),
     listarCarrosMaisDefeituosos(Connection, Carros),
-    format('| Carros mais defeituosos: ~w~n', [Carros]),
+    writeln('| Carros mais defeituosos:'),
+    mostraCarrosDefeituosos(Carros),
     menuDashboard.
 
 exibirAlugueisPorCategoria(Connection) :-
     listarAlugueisPorCategoria(Connection, Alugueis),
-    format('| Aluguéis por Categoria: ~w~n', [Alugueis]),
+    writeln('| Aluguéis por Categoria: '),
+    mostraAlugueisPorCategoria(Alugueis),
     menuDashboard.
 
 
