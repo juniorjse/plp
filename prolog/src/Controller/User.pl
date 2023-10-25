@@ -207,6 +207,7 @@ cancelarAluguel(Connection) :-
     current_user_id(UserID),
     iniciandoDatabase(Connection),
     buscarAlugueisPorUsuario(Connection, UserID, Alugueis),
+    writeln(''),
     (   Alugueis = []
     ->  writeln('Nenhum aluguel encontrado para este usuário.'),
         menuCliente
@@ -231,6 +232,7 @@ cancelarAluguel(Connection) :-
                 db_parameterized_query_no_return(Connection, Q1, [AluguelId]),
                 Q2 = "UPDATE carros SET status = 'D' WHERE id_carro = (SELECT id_carro FROM Alugueis WHERE id_aluguel = '%w')",
                 db_parameterized_query_no_return(Connection, Q2, [AluguelId]),
+                writeln(''),
                 writeln('Aluguel cancelado com sucesso!'),
                 writeln(''),
                 menuCliente
