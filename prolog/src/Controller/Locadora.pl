@@ -12,6 +12,7 @@ exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1]).
 :- use_module('./localdb/user_operations').
 :- use_module('./localdb/connectiondb').
 
+
 menuLocadora :-
     writeln(''),
     writeln('|-----------------------------------|'),
@@ -31,13 +32,12 @@ menuLocadora :-
      Opcao = "2" -> removerCarro, menuLocadora;
      Opcao = "3" -> registrarDevolucao;
      Opcao = "4" -> registroDeAluguelPorPessoa, menuLocadora;
-     Opcao = "5" -> dashboard, menuLocadora;
-     Opcao = "0" -> true;
+     Opcao = "5" -> menuDashboard, menuLocadora;
+     Opcao = "0" -> writeln('Saindo...'), writeln(''), halt;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
 
 
 %CADASTRAR_CARRO
-
 cadastrarCarro :-
     connectiondb:iniciandoDatabase(Connection),
     writeln(''),
@@ -86,7 +86,6 @@ confirmaCadastro(Confirm) :-
 
 
 %REGISTRAR_DEVOLUCAO
-
 registrarDevolucao :-
     writeln('Digite o número do contrato/Id do aluguel a ser encerrado:'),
     read_line_to_string(user_input, InputString),
@@ -106,17 +105,18 @@ registrarDevolucao :-
         printAluguel( DataInicio, DataDevolucao, IDCarro),
         verificaDevolucao(DataDevolucao, Devolucao),
         (Devolucao = "Devolução dentro do prazo" ->
+            writeln('|DEVOLUÇÃO NO PRAZO'),
             printDevolucao(ValorTotal, IDCarro);
         Devolucao = "Devolução adiantada" ->
-            writeln('Motivo da devolução adiantada:'),
-            writeln('1. Problema no carro'),
-            writeln('2. Outro motivo'),
+            writeln('|DEVOLUÇÃO ADIANTADA \n|Motivo da devolução adiantada:'),
+            writeln('|1. Problema no carro'),
+            writeln('|2. Outro motivo'),
             read_line_to_string(user_input, Motivo),
             (Motivo = "1" -> enviaParaMecanico(IDCarro), menuLocadora;
              Motivo = "2" -> calculaValor( DataInicio, DataDevolucao, IDCarro, Valor), 
              printDevolucao(Valor, IDCarro), menuLocadora;
              writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora);
-        writeln("---Devolução Atrasada---"),
+        writeln("|DEVOLUÇÃO ATRASADA"),
         calculaValor(DataInicio, DataDevolucao, IDCarro, Valor), 
             printDevolucao(Valor, IDCarro), menuLocadora
         )
@@ -129,22 +129,25 @@ buscarAluguel(NumContrato, Contrato) :-
 
 buscarCarro(IDCarro) :-
     connectiondb:iniciandoDatabase(Connection),
-    format("|---Detalhes do aluguel com ID ~w:---| \n", [IDCarro]),
+    format("|-----------Detalhes do aluguel com ID ~w:-------------| \n", [IDCarro]),
     Resultado = [row(Marca,Modelo,Ano)],
     dbop:db_parameterized_query(Connection, "SELECT marca, modelo, ano FROM Carros WHERE id_carro = '%w'", [IDCarro], Resultado),
     connectiondb:encerrandoDatabase(Connection),
     (
         Resultado = null ->
         writeln("Carro com ID " + IDCarro + " não encontrado.");  
-        format("Marca:  ~w  Modelo: ~w  Ano:    ~w", [Marca,Modelo,Ano])
+        format("|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w|\n", [Marca,Modelo,Ano])
     ).
 
 printAluguel(DataInicio, DataDevolucao, IDCarro) :-
     buscarCarro(IDCarro),
+    DataInicio = date(YI,MI,DI),
+    DataDevolucao = date(YD,MD,DD),
     calculaValor(DataInicio, DataDevolucao, IDCarro, Valor),
-    writeln("Data de início do aluguel: " + DataInicio),
-    writeln("Data de devolução: " + DataDevolucao),
-    writeln("Valor total do aluguel: R$ " + Valor).
+    format("|Data de início do aluguel:       ~w/~w/~w~n", [DI,MI,YI]),
+    format("|Data de devolução:               ~w/~w/~w~n", [DD,MD,YD]),
+    format("|Valor total do aluguel:          R$ ~w~n", [Valor]),
+    writeln('').
 
 calculaValor(DataInicio, DataDevolucao, IDCarro, Valor) :-
     date_get(today, DataAtual),
@@ -169,10 +172,8 @@ verificaDevolucao(DataDevolucao, Resultado) :-
     ).
 
 printDevolucao(Valor, IDCarro) :-
-    writeln("Realizar pagamento do aluguel! Valor total:"),
-    writeln("R$ " + Valor),
-    writeln("1. Confirmar pagamento"),
-    writeln("2. Cancelar"),
+    format("|Realizar pagamento do aluguel! \n|Valor total: R$ ~w\n\n", [Valor]),
+    write("|1. Confirmar pagamento\n|2. Cancelar\n|:"),
     read_line_to_string(user_input, ConfirmaPagamento),
     processarPagamento(ConfirmaPagamento, IDCarro, Valor).
 
@@ -202,16 +203,18 @@ menuDashboard :-
     connectiondb:iniciandoDatabase(Connection),
 
     writeln(''),
-    writeln('Dashboard:'),
-    writeln('1. Receita total'),
-    writeln('2. Número de aluguéis'),
-    writeln('3. Total de carros'),
-    writeln('4. Carros mais defeituosos'),
-    writeln('5. Aluguéis por categoria'),
+    writeln('|---------------------------|'),
+    writeln('|---------DASHBOARD---------|'),
+    writeln('|---------------------------|'),
+    writeln('|1. Receita total           |'),
+    writeln('|2. Número de aluguéis      |'),
+    writeln('|3. Total de carros         |'),
+    writeln('|4. Carros mais defeituosos |'),
+    writeln('|5. Aluguéis por categoria  |'),
     writeln('Escolha uma opção (ou digite qualquer outra coisa para voltar ao menu principal):'),
     read_line_to_string(user_input, Opcao),
     writeln(''),
-    menuOpcao(Opcao).
+    menuOpcao(Opcao, Connection).
 
 menuOpcao("1", Connection) :- exibirReceitaTotal(Connection).
 menuOpcao("2", Connection) :- exibirNumeroDeAlugueis(Connection).
@@ -221,7 +224,7 @@ menuOpcao("5", Connection) :- exibirAlugueisPorCategoria(Connection).
 
 menuOpcao(_, Connection) :-
     writeln('Dígito inválido. Voltando ao menu principal.'),
-    menuDashboard(Connection).
+    menuLocadora.
 
 calcularReceitaTotal(Connection, Total) :-
     odbc_query(Connection, 'SELECT SUM(valor_total) FROM Alugueis', row([Total])).

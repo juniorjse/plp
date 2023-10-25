@@ -72,32 +72,6 @@ authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenti
         TipoUsuario = none
     ).
 
-menuCliente :-
-    writeln(''),
-    writeln('|------------------------------------|'),
-    writeln('|            MENU CLIENTE            |'),
-    writeln('|------------------------------------|'),
-    writeln('|1. Listar carros por categoria      |'),
-    writeln('|2. Realizar aluguel                 |'),
-    writeln('|3. Cancelar aluguel                 |'),
-    writeln('|4. Ranking de Carros Mais Alugados  |'),
-    writeln('|0. Sair                             |'),
-    writeln(''),
-    writeln('0. Sair'),
-    writeln('Escolha uma opção:'),
-
-    read_line_to_string(user_input, Opcao),
-    writeln(''),
-
-    (Opcao = "1" -> listarCarrosPorCategoria(Connection), menuCliente;
-     Opcao = "2" -> 
-        realizarAluguel(Connection),
-        menuCliente;
-     Opcao = "3" -> cancelarAluguel, menuCliente;
-     Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
-     Opcao = "0" -> writeln('Saindo...\n'), halt;
-        writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
-
 solicitarCadastro :-
     writeln(''),
     writeln('Digite o seu nome:'),
@@ -165,87 +139,45 @@ usuario(Email, Senha, Nome, Sobrenome) :-
     connectiondb:encerrandoDatabase(Connection).
 
 
-authenticateCar(Connection, CarroID, DiariaCarro, Autenticado) :-
-    getCarro(Connection, CarroID, CarroInfo),
-    (CarroInfo = [row(_, _, _, _, _, _, _, _, DiariaCarro, _)] ->
-        Autenticado = 1
-    ;
-        Autenticado = 0
-    ).
 
-realizarAluguel(Connection) :-
-    current_user_id(UserID),
-    iniciandoDatabase(Connection),
+menuCliente :-
     writeln(''),
-    writeln('Digite o ID do carro:'),
-    read_line_to_string(user_input, CarroIDStr),
-    atom_number(CarroIDStr, CarroID),
+    writeln('|------------------------------------|'),
+    writeln('|            MENU CLIENTE            |'),
+    writeln('|------------------------------------|'),
+    writeln('|1. Listar carros por categoria      |'),
+    writeln('|2. Realizar aluguel                 |'),
+    writeln('|3. Cancelar aluguel                 |'),
+    writeln('|4. Ranking de Carros Mais Alugados  |'),
+    writeln('|0. Sair                             |'),
+    writeln(''),
+    writeln('Escolha uma opção:'),
 
-    writeln('Digite a quantidade de dias que deseja alugar:'),
-    read_line_to_string(user_input, DiasAluguelStr),
-    atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
+    read_line_to_string(user_input, Opcao),
+    writeln(''),
 
-    authenticateCar(Connection, CarroID, DiariaCarro, Autenticado),
+    (Opcao = "1" -> listarCarrosPorCategoria(Connection), menuCliente;
+     Opcao = "2" -> realizarAluguel(Connection),          menuCliente;
+     Opcao = "3" -> cancelarAluguel, menuCliente;
+     Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
+     Opcao = "0" -> writeln('Saindo...\n'), halt;
+        writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
 
-    ( Autenticado =:= 1 ->
-        ValorTotal is DiariaCarro * DiasAluguel,
-        writeln(''),
-        format('Valor Total: ~w\n', [ValorTotal]),
-        writeln(''),
-        writeln('Deseja confirmar o aluguel desse carro?'),
-        writeln('1. Sim'),
-        writeln('2. Não'),
-        read_line_to_string(user_input, ConfirmaComNL), 
-        atom_chars(ConfirmaComNL, [ConfirmaChar|_]),
-
-        (ConfirmaChar = '1' ->
-            writeln(''),
-            alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal),
-            writeln('Aluguel realizado com sucesso!')
-        ;
-            writeln(''),
-            writeln('Aluguel cancelado.')
-        )
-
-    ;
-        writeln('Carro não encontrado.')
-    ).
-
-rankingCarrosMaisAlugados :-
-    writeln("|--------------------------------------------------------------------------------------|"),
-    writeln("|                                  RANKING DE CARROS                                   |"),
-    writeln("|--------------------------------------------------------------------------------------|"),
-    connectiondb:iniciandoDatabase(Connection),
-    user_operations:carrosPorPopularidade(Connection,ListaCarros),
-    mostraCarros(ListaCarros),
-    writeln("|--------------------------------------------------------------------------------------|\n\n\n"),
-    connectiondb:encerrandoDatabase(Connection),
-    menuMecanica.
-
-mostraCarros([]).  
-mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
-    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
-    mostraCarros(Outros).
-
-consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
-    connectiondb:iniciandoDatabase(Connection),
-    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = '%w' AND status = 'D'", [Categoria], Carros),
-    connectiondb:encerrandoDatabase(Connection).
-
+%LISTAR_CARROS
 listarCarrosPorCategoria(Connection) :-
-    writeln("Opções de Categoria:"),
-    writeln("1. Econômico"),
-    writeln("2. Intermediário"),
-    writeln("3. SUV"),
-    writeln("4. Luxo"),
-    writeln("5. Minivan"),
-    writeln("6. Sedan"),
-    writeln("7. Conversível"),
-    writeln("8. Esportivo"),
-    writeln("9. Pickup"),
-    writeln("10. Elétrico"),
+    writeln("|---Opções de Categoria:---|"),
+    writeln("|1. Econômico--------------|"),
+    writeln("|2. Intermediário----------|"),
+    writeln("|3. SUV--------------------|"),
+    writeln("|4. Luxo-------------------|"),
+    writeln("|5. Minivan----------------|"),
+    writeln("|6. Sedan------------------|"),
+    writeln("|7. Conversível------------|"),
+    writeln("|8. Esportivo--------------|"),
+    writeln("|9. Pickup-----------------|"),
+    writeln("|10. Elétrico--------------|"),
     writeln(""),
-    writeln("Escolha a categoria de carro desejada (Exemplo: 3): "),
+    write("|Escolha a categoria de carro desejada (Exemplo: 3): \n|:"),
 
     read_line_to_string(user_input, Categoria),
     writeln(''),
@@ -279,3 +211,69 @@ printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
     nl,
     printCarros(RestoCarros).
 
+
+authenticateCar(Connection, CarroID, DiariaCarro, Autenticado) :-
+    user_operations:getCarro(Connection, CarroID, CarroInfo),
+    (CarroInfo = [row(_, _, _, _, _, _, _, _, DiariaCarro, _)] ->
+        Autenticado = 1
+    ;
+        Autenticado = 0
+    ).
+
+realizarAluguel(Connection) :-
+    current_user_id(UserID),
+    iniciandoDatabase(Connection),
+    writeln(''),
+    writeln('Digite o ID do carro:'),
+    read_line_to_string(user_input, CarroIDStr),
+    atom_number(CarroIDStr, CarroID),
+
+    writeln('Digite a quantidade de dias que deseja alugar:'),
+    read_line_to_string(user_input, DiasAluguelStr),
+    atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
+
+    authenticateCar(Connection, CarroID, DiariaCarro, Autenticado),
+
+    ( Autenticado =:= 1 ->
+        ValorTotal is DiariaCarro * DiasAluguel,
+        writeln(''),
+        format('Valor Total: ~w\n', [ValorTotal]),
+        writeln(''),
+        writeln('Deseja confirmar o aluguel desse carro?'),
+        writeln('1. Sim'),
+        writeln('2. Não'),
+        read_line_to_string(user_input, ConfirmaComNL), 
+        atom_chars(ConfirmaComNL, [ConfirmaChar|_]),
+
+        (ConfirmaChar = '1' ->
+            writeln(''),
+            user_operations:alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal),
+            writeln('Aluguel realizado com sucesso!')
+        ;
+            writeln(''),
+            writeln('Aluguel cancelado.')
+        )
+
+    ;
+        writeln('Carro não encontrado.')
+    ).
+
+rankingCarrosMaisAlugados :-
+    writeln("|--------------------------------------------------------------------------------------|"),
+    writeln("|                                  RANKING DE CARROS                                   |"),
+    writeln("|--------------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+    user_operations:carrosPorPopularidade(Connection,ListaCarros),
+    mostraCarros(ListaCarros),
+    writeln("|--------------------------------------------------------------------------------------|\n\n\n"),
+    connectiondb:encerrandoDatabase(Connection).
+
+mostraCarros([]).  
+mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
+    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
+    mostraCarros(Outros).
+
+consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
+    connectiondb:iniciandoDatabase(Connection),
+    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = '%w' AND status = 'D'", [Categoria], Carros),
+    connectiondb:encerrandoDatabase(Connection).
