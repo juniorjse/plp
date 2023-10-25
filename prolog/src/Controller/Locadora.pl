@@ -1,17 +1,14 @@
 :- module(locadora, [menuLocadora/0, opcaoMenu/1, cadastrarCarro/0, confirmaCadastro/1, registrarDevolucao/0, printAluguel/4, menuDashboard/0, menuOpcao/1, calcularReceitaTotal/2, 
 contarAlugueis/2, contarCarros/2, listarCarrosMaisDefeituosos/2, listarAlugueisPorCategoria/2, exibirReceitaTotal/1,
 exibirNumeroDeAlugueis/1, exibirTotalDeCarros/1, 
-exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1]).
-
-
-:- use_module(util).
+exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1, removerCarro/0]).
 :- use_module(library(odbc)).
 :- use_module(library(readutil)).
 :- use_module(library(date_time)).
 :- use_module('./localdb/dbop').
 :- use_module('./localdb/user_operations').
 :- use_module('./localdb/connectiondb').
-
+:- use_module('./localdb/util').
 
 menuLocadora :-
     writeln(''),
@@ -274,4 +271,41 @@ exibirAlugueisPorCategoria(Connection) :-
 connectiondb:encerrandoDatabase(Connection).
 
 
-
+    listarAlugueisPorPessoa :-
+        writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
+        util:get_input('', ClienteIDStr),
+        writeln(''),
+    
+        (util:isANumber(ClienteID, ClienteIDStr) ->
+            connectiondb:iniciandoDatabase(Connection),
+            (clienteExiste(Connection, ClienteID) ->
+                user_operations:getAlugueisPorPessoa(Connection, ClienteID, Alugueis),
+                (length(Alugueis, NumRegistros), NumRegistros > 0 ->
+                    writeln('Registros de Aluguéis:'),
+                    mostrarRegistrosDeAlugueis(Connection, Alugueis)
+                ;
+                    writeln('Não há registros de aluguéis para este cliente.')
+                ),
+                connectiondb:encerrandoDatabase(Connection)
+            ;
+                writeln('Cliente não encontrado na base de dados.')
+            )
+        ;
+            writeln('ID de cliente inválido. Tente novamente.')
+        ).
+    
+    mostrarRegistrosDeAlugueis(_, []).
+    mostrarRegistrosDeAlugueis(Connection, [Registro | RegistrosRestantes]) :-
+        mostrarRegistroDeAluguel(Connection, Registro),
+        mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
+    
+    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio, DataDevolucao, Valor, Status)) :-
+        writeln('|-------Carro-------|'),
+        write('Marca:               '), writeln(Marca),
+        write('Modelo:              '), writeln(Modelo),
+        write('Ano:                 '), writeln(Ano),
+        write('Data de Início:      '), writeln(DataInicio), 
+        write('Data de Devolução:   '), writeln(DataDevolucao), 
+        write('Valor do Aluguel: R$ '), writeln(Valor), 
+        write('Status do Aluguel:   '), writeln(Status), 
+        writeln('').
