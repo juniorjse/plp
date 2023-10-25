@@ -72,6 +72,7 @@ authenticate(Connection, NomeUsuario, Email, Senha, TipoUsuario, UserID, Autenti
         TipoUsuario = none
     ).
 
+
 solicitarCadastro :-
     writeln(''),
     writeln('Digite o seu nome:'),
@@ -257,24 +258,4 @@ realizarAluguel(Connection) :-
     ;
         writeln('Carro não encontrado.')
     ).
-
-rankingCarrosMaisAlugados :-
-    writeln("|--------------------------------------------------------------------------------------|"),
-    writeln("|                                  RANKING DE CARROS                                   |"),
-    writeln("|--------------------------------------------------------------------------------------|"),
-    connectiondb:iniciandoDatabase(Connection),
-    user_operations:carrosPorPopularidade(Connection,ListaCarros),
-    mostraCarros(ListaCarros),
-    writeln("|--------------------------------------------------------------------------------------|\n\n\n"),
-    connectiondb:encerrandoDatabase(Connection).
-
-mostraCarros([]).  
-mostraCarros([row(Marca, Modelo, Ano, Placa, Alugueis) | Outros]) :-
-    format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Alugueis:  ~w|~n',[ Marca, Modelo, Ano, Placa, Alugueis]),
-    mostraCarros(Outros).
-
-consultarCarrosPorCategoria(Connection, Categoria, Carros) :-
-    connectiondb:iniciandoDatabase(Connection),
-    dbop:db_parameterized_query(Connection, "SELECT id_carro, marca, modelo, ano FROM Carros WHERE categoria = '%w' AND status = 'D'", [Categoria], Carros),
-    connectiondb:encerrandoDatabase(Connection).
 
