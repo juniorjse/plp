@@ -53,7 +53,7 @@ menuLocadora :-
         mostrarRegistroDeAluguel(Connection, Registro),
         mostrarRegistrosDeAlugueis(Connection, RegistrosRestantes).
     
-    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio, DataDevolucao, Valor, Status)) :-
+    mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Modelo, Ano, DataInicio, DataDevolucao, Valor, Status)) :-
         writeln('|-------Carro-------|'),
         write('Marca:               '), writeln(Marca),
         write('Modelo:              '), writeln(Modelo),
