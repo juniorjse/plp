@@ -13,7 +13,8 @@
     getAlugueisPorPessoa/3,
     clienteExiste/2,
     removeCarro/2,
-    carroExiste/2
+    carroExiste/2,
+    getCarroStatus/3
 ]).
 
 :- use_module(library(odbc)).
@@ -113,3 +114,7 @@ carroExiste(Connection, CarroID) :-
     db_parameterized_query(Connection, Q, [CarroID], [row(CountRow)]),
 
     (CountRow > 0).
+
+getCarroStatus(Connection, CarroID, Status) :-
+    Q = "SELECT status FROM carros WHERE id_carro = %w",
+    db_parameterized_query(Connection, Q, [CarroID], [row(Status)]).

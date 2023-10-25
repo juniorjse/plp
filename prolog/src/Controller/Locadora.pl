@@ -71,10 +71,20 @@ removerCarro :-
     (util:isANumber(CarroID, CarroIDStr) ->
         connectiondb:iniciandoDatabase(Connection),
         (carroExiste(Connection, CarroID) ->
-            user_operations:removeCarro(Connection, CarroID),
-            writeln('Carro removido com sucesso.')
+            user_operations:getCarroStatus(Connection, CarroID, Status),  
+            (Status = 'O' ->  
+                writeln('Este carro no momento encontra-se alugado... Escolha outro ou retorne ao menu principal.')
+            ;
+                writeln('Confirma a remoção do carro? (s/n):'),
+                read_line_to_string(user_input, ConfirmaRemocao),
+                (ConfirmaRemocao = "s" ->  
+                    user_operations:removeCarro(Connection, CarroID),
+                    writeln('Carro removido com sucesso.');
+                    writeln('Remoção cancelada.')  
+                )
+            )
         ;
-            writeln('Carro não encontrado na base de dados.')
+            writeln('ID informado é inexistente ou incorreto.')  
         ),
         connectiondb:encerrandoDatabase(Connection)
     ;
