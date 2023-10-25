@@ -75,4 +75,8 @@ finalizarReparo :-
     
     connectiondb:encerrandoDatabase(Connection).
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 48d18d67d1f789464bd8aebf63961b491138373b
 
