@@ -72,6 +72,7 @@ finalizarReparo :-
         )
     ),
 
+    
     connectiondb:encerrandoDatabase(Connection).
 
 
