@@ -1,9 +1,7 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
                             createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2, consultarCarrosPraReparo/2,
                             alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3, getAlugueisPorPessoa/3, clienteExiste/2,
-    removeCarro/2,
-    carroExiste/2,
-    getCarroStatus/3]).
+                            removeCarro/2, carroExiste/2, getCarroStatus/3]).
 
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
@@ -66,8 +64,8 @@ alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal) :-
     ).
 
 getCarro(Connection, CarroID, CarroInfo) :-
-    Q = "SELECT * FROM carros WHERE id_carro = %w",
-    db_parameterized_query(Connection, Q, [CarroID], CarroInfo), writeln(CarroInfo).
+    Q = "SELECT * FROM carros WHERE id_carro = '%w'",
+    db_parameterized_query(Connection, Q, [CarroID], CarroInfo).
 
 % buscarAlugueisPorUsuario/3
 buscarAlugueisPorUsuario(Connection, UserID, Alugueis) :-
@@ -87,7 +85,6 @@ verificaTempoAluguel(Connection, AluguelId, Tempo) :-
 getAlugueisPorPessoa(Connection, ClienteID, Alugueis) :-
     Query = "SELECT c.id_carro, c.marca, c.modelo, c.ano, a.data_inicio, a.data_devolucao, a.valor_total, a.status_aluguel FROM Alugueis a INNER JOIN carros c ON a.id_carro = c.id_carro WHERE a.id_usuario = %w",
     db_parameterized_query(Connection, Query, [ClienteID], Alugueis).
-
 
 consultarCarrosPraReparo(Connection, Carros) :-
     db_query(
