@@ -8,7 +8,7 @@ VALUES
     (6, 'Chevrolet', 'Cruze', 2018, 'PQR1234', 'Intermediário', 40000, 'O', 180.0, 'Um sedan intermediário com conforto e tecnologia.'),
     (7, 'Porsche', '911', 2022, 'EFG6789', 'Esportivo', 12000, 'D', 500.0, 'Um icônico esportivo com desempenho excepcional.'),
     (8, 'Honda', 'Civic', 2019, 'VWX9101', 'Intermediário', 35000, 'D', 170.0, 'Confiável e eficiente, ótimo para viagens.'),
-    (9, 'Hyundai', 'HB20S', 2022, 'YZA2345', 'Sedan', 10000, 'D', 150.0, 'Um sedan compacto com visual moderno.'),
+    (9, 'Hyundai', 'HB20S', 2022, 'YZA2345', 'Sedan', 10000, 'R', 150.0, 'Um sedan compacto com visual moderno.'),
     (10, 'Ford', 'Ka Sedan', 2021, 'BCD6789', 'Sedan', 12000, 'D', 95.0, 'Um sedan compacto com espaço interno.'),
     (11, 'Toyota', 'Hilux', 2018, 'QRS2345', 'Pickup', 45000, 'D', 250.0, 'Uma pickup robusta e versátil para cargas.'),
     (12, 'Tesla', 'Model 3', 2022, 'TUV6789', 'Elétrico', 5000, 'D', 350.0, 'Carro elétrico com autonomia avançada.'),
