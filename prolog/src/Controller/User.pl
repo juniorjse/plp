@@ -212,7 +212,7 @@ printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
 
 authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado) :-
     user_operations:getCarro(Connection, CarroID, CarroInfo),
-    (CarroInfo = [row(_, _, _, _, _, _, _, Status, DiariaCarro, _)] ->
+    (CarroInfo = [row(_, _, _, _, _, _,  Status, _, DiariaCarro, _)] ->
         Autenticado = 1
     ;
         Autenticado = 0
@@ -227,7 +227,6 @@ realizarAluguel(Connection) :-
     atom_number(CarroIDStr, CarroID),
 
     authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado),
-    
     (Status = 'D' ->
         writeln('Digite a quantidade de dias que deseja alugar:'),
         read_line_to_string(user_input, DiasAluguelStr),
@@ -315,7 +314,7 @@ cancelarAluguel(Connection) :-
                 writeln(''),
                 menuCliente
             ;   ConfirmaChar = '2'
-            ->  menuCliente
+            ->  writeln('Operação cancelada.'), menuCliente
             ;   writeln('Opção inválida. Por favor, escolha novamente.'),
                 menuCliente
             )

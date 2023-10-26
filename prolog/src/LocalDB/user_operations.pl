@@ -1,7 +1,7 @@
 :- module(user_operations, [createUser/6, getUserByEmail/3, getTipoByEmail/3, getUser/4, userAlreadyExists/3, getusuariosByEmail/4,
                             createCar/8, carroPorPlaca/3, carAlreadyExists/3, getProximoIDCarro/2, consultarCarrosPraReparo/2,
                             alugar/5, getCarro/3, buscarAlugueisPorUsuario/3, printAluguelInfo/1, verificaTempoAluguel/3, getAlugueisPorPessoa/3, clienteExiste/2,
-                            removeCarro/2, carroExiste/2, getCarroStatus/3]).
+                            removeCarro/2, carroExiste/2, getCarroStatus/3, getAllCars/2]).
 
 :- use_module(library(odbc)).
 :- use_module('./util.pl').
@@ -160,3 +160,13 @@ carroExiste(Connection, CarroID) :-
 getCarroStatus(Connection, CarroID, Status) :-
     Q = "SELECT status FROM carros WHERE id_carro = %w",
     db_parameterized_query(Connection, Q, [CarroID], [row(Status)]).
+
+getAllCars(Connection, Carros) :-
+    db_query(Connection,
+        "SELECT id_carro, marca, modelo, ano, placa FROM carros ORDER BY id_carro", 
+        Carros).
+
+getAllClientes(Connection, Clientes) :-
+    db_query(Connection,
+        "SELECT id_usuario, nome, sobrenome, email FROM usuarios WHERE tipo = 'cliente'", 
+        Clientes).

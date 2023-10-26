@@ -40,7 +40,25 @@ O projeto consiste em desenvolver um sistema de locadora de carros operado por t
      SSL mode: disable
      Port: 5433
      Password: plp123 
-5. Após isso, rode os inserts (que estão [nesse aquivo](inserts.sql)) no pgAdmin para povoar sua tabela. Parabéns, seu banco de dados está configurado!
+5. Abra o Query Tool e rode o seguinte script:
+>
+     CREATE OR REPLACE FUNCTION verificaTempoAluguel(aluguel_id INT)
+     RETURNS INT AS $$
+     DECLARE
+          data_inicio_aluguel DATE;
+          duracao INT;
+     BEGIN
+     SELECT data_inicio INTO data_inicio_aluguel FROM alugueis WHERE id_aluguel = aluguel_id;
+     duracao := (SELECT DATE_PART('day', NOW() - data_inicio_aluguel)::INT);
+     IF duracao > 1 THEN
+          RETURN 1;
+     ELSE
+          RETURN 0;
+     END IF;
+     END;
+     $$ LANGUAGE plpgsql;
+6. Faça a execussão do projeto em alguma das linguagens disponíveis para que a criação das tabelas seja efetuada.
+7. Após isso, rode os inserts (que estão [nesse aquivo](inserts.sql)) no pgAdmin para povoar sua tabela. Parabéns, seu banco de dados está configurado!
 - **ATENÇÃO:** Porta e/ou senha diferentes das utilizadas na aplicação podem acarretar em problemas na execução. Ao instalar o PostgreSQL tenha certeza que as informações estão compatíveis com o projeto.
 
 #### ☀️ HASKELL:
