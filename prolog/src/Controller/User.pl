@@ -161,6 +161,24 @@ menuCliente :-
      Opcao = "0" -> writeln('Saindo...\n'), halt;
         writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
 
+%LISTAS
+mostraCarros([]).  
+mostraCarros([row(Id, Marca, Modelo, Ano, Placa) | Outros]) :-
+    format('|Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w|~n',[ Id, Marca, Modelo, Ano, Placa]),
+    mostraCarros(Outros).
+
+listarTodosCarros :-
+    writeln("|-------------------------------------------------------------------------------|"),
+    writeln("|                                    CARROS                                     |"),
+    writeln("|-------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+
+    user_operations:getAllCars(Connection, Carros),
+    mostraCarros(Carros),
+    writeln(''),
+
+    connectiondb:encerrandoDatabase(Connection).
+
 %LISTAR_CARROS
 listarCarrosPorCategoria(Connection) :-
     writeln("|---Opções de Categoria:---|"),
@@ -219,6 +237,7 @@ authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado) :-
     ).
 
 realizarAluguel(Connection) :-
+    listarTodosCarros,
     current_user_id(UserID),
     iniciandoDatabase(Connection),
     writeln(''),

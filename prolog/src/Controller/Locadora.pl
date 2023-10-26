@@ -69,6 +69,23 @@ listarTodosUsuarios :-
 
     connectiondb:encerrandoDatabase(Connection).
 
+mostrarAlugueis([]).  
+mostrarAlugueis([row(ID, Marca, Modelo, Nome, Sobrenome) | Outros]) :-
+    format('|Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Cliente:~t ~w ~w~t~40+|~n',[ID, Marca, Modelo, Nome, Sobrenome]),
+    mostrarAlugueis(Outros).
+
+listarTodosAlugueis :-
+    writeln("|------------------------------------------------------------------------------------------|"),
+    writeln("|                                         ALUGUEIS                                         |"),
+    writeln("|------------------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+
+    user_operations:getAlugueisAtivos(Connection, Alugueis),
+    mostrarAlugueis(Alugueis),
+    writeln(''),
+
+    connectiondb:encerrandoDatabase(Connection).
+
 
 %CADASTRAR_CARRO
 cadastrarCarro :-
@@ -120,7 +137,7 @@ confirmaCadastro(Confirm) :-
 
 %REGISTRAR_DEVOLUCAO
 registrarDevolucao :-
-    listarTodosCarros,
+    listarTodosAlugueis,
     writeln('Digite o número do contrato/Id do aluguel a ser encerrado:'),
     read_line_to_string(user_input, InputString),
     writeln(''),
@@ -221,9 +238,9 @@ processarPagamento("1", IDCarro, ValorTotal) :-
     dbop:db_parameterized_query_no_return(Connection, "UPDATE Alugueis SET valor_total = %w WHERE id_carro = %w", [ValorTotal, IDCarro]),
     connectiondb:encerrandoDatabase(Connection),
     menuLocadora.
-processarPagamento("2", _) :- 
+processarPagamento("2", _,_) :- 
     writeln("Operação cancelada!"), menuLocadora.
-processarPagamento(_, _) :- 
+processarPagamento(_, _,_) :- 
     writeln("Opção inválida. Você será direcionado(a) ao menu inicial."), menuLocadora.
 
 enviaParaMecanico(IDCarro) :-
