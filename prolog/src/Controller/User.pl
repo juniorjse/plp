@@ -179,6 +179,24 @@ listarTodosCarros :-
 
     connectiondb:encerrandoDatabase(Connection).
 
+mostraCarrosDisponiveis([]).  
+mostraCarrosDisponiveis([row(Id, Marca, Modelo, Ano, Placa, Diaria) | Outros]) :-
+    format('Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w   Diaria:~t ~w ~t~10+~n',[ Id, Marca, Modelo, Ano, Placa, Diaria]),
+    mostraCarrosDisponiveis(Outros).
+
+listarDisponiveis :-
+    writeln("--------------------------------------------------------------------------------------------------"),
+    writeln("                                        CARROS DISPONÍVEIS                                        "),
+    writeln("--------------------------------------------------------------------------------------------------"),
+    connectiondb:iniciandoDatabase(Connection),
+
+    user_operations:getCarrosDisponiveis(Connection, Carros),
+    mostraCarrosDisponiveis(Carros),
+    writeln(''),
+
+    connectiondb:encerrandoDatabase(Connection).
+
+
 %LISTAR_CARROS
 listarCarrosPorCategoria(Connection) :-
     writeln("|---Opções de Categoria:---|"),
@@ -237,7 +255,7 @@ authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado) :-
     ).
 
 realizarAluguel(Connection) :-
-    listarTodosCarros,
+    listarDisponiveis,
     current_user_id(UserID),
     iniciandoDatabase(Connection),
     writeln(''),
