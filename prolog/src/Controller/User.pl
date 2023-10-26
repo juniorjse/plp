@@ -156,7 +156,7 @@ menuCliente :-
 
     (Opcao = "1" -> listarCarrosPorCategoria(Connection), menuCliente;
      Opcao = "2" -> realizarAluguel(Connection),          menuCliente;
-     Opcao = "3" -> cancelarAluguel, menuCliente;
+     Opcao = "3" -> cancelarAluguel(Connection), menuCliente;
      Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
      Opcao = "0" -> writeln('Saindo...\n'), halt;
         writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
@@ -210,9 +210,9 @@ printCarros([row(ID_Carro, Marca, Modelo, Ano) | RestoCarros]) :-
     printCarros(RestoCarros).
 
 
-authenticateCar(Connection, CarroID, DiariaCarro, Autenticado) :-
+authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado) :-
     user_operations:getCarro(Connection, CarroID, CarroInfo),
-    (CarroInfo = [row(_, _, _, _, _, _, _, _, DiariaCarro, _)] ->
+    (CarroInfo = [row(_, _, _, _, _, _, _, Status, DiariaCarro, _)] ->
         Autenticado = 1
     ;
         Autenticado = 0
@@ -226,35 +226,41 @@ realizarAluguel(Connection) :-
     read_line_to_string(user_input, CarroIDStr),
     atom_number(CarroIDStr, CarroID),
 
-    writeln('Digite a quantidade de dias que deseja alugar:'),
-    read_line_to_string(user_input, DiasAluguelStr),
-    atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
+    authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado),
+    
+    % Verifique se o status do carro é 'D' antes de permitir o aluguel
+    (Status = 'D' ->
+        writeln('Digite a quantidade de dias que deseja alugar:'),
+        read_line_to_string(user_input, DiasAluguelStr),
+        atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
 
-    authenticateCar(Connection, CarroID, DiariaCarro, Autenticado),
-
-    ( Autenticado =:= 1 ->
-        ValorTotal is DiariaCarro * DiasAluguel,
-        writeln(''),
-        format('Valor Total: ~w\n', [ValorTotal]),
-        writeln(''),
-        writeln('Deseja confirmar o aluguel desse carro?'),
-        writeln('1. Sim'),
-        writeln('2. Não'),
-        read_line_to_string(user_input, ConfirmaComNL), 
-        atom_chars(ConfirmaComNL, [ConfirmaChar|_]),
-
-        (ConfirmaChar = '1' ->
+        ( Autenticado =:= 1 ->
+            ValorTotal is DiariaCarro * DiasAluguel,
             writeln(''),
-            user_operations:alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal),
-            writeln('Aluguel realizado com sucesso!')
+            format('Valor Total: ~w\n', [ValorTotal]),
+            writeln(''),
+            writeln('Deseja confirmar o aluguel desse carro?'),
+            writeln('1. Sim'),
+            writeln('2. Não'),
+            read_line_to_string(user_input, ConfirmaComNL), 
+            atom_chars(ConfirmaComNL, [ConfirmaChar|_]),
+
+            (ConfirmaChar = '1' ->
+                writeln(''),
+                user_operations:alugar(Connection, UserID, CarroID, DiasAluguel, ValorTotal),
+                writeln('Aluguel realizado com sucesso!')
+            ;
+                writeln(''),
+                writeln('Aluguel cancelado.')
+            )
+
         ;
-            writeln(''),
-            writeln('Aluguel cancelado.')
+            writeln('Carro não encontrado.')
         )
-
     ;
-        writeln('Carro não encontrado.')
+        writeln('Carro não disponível para aluguel.')
     ).
+
 
 rankingCarrosMaisAlugados :-
     writeln("|--------------------------------------------------------------------------------------|"),
