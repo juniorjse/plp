@@ -316,7 +316,7 @@ cancelarAluguel(Connection) :-
                 writeln(''),
                 menuCliente
             ;   ConfirmaChar = '2'
-            ->  menuCliente
+            ->  writeln('Operação cancelada.'), menuCliente
             ;   writeln('Opção inválida. Por favor, escolha novamente.'),
                 menuCliente
             )
