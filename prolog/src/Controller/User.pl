@@ -156,7 +156,7 @@ menuCliente :-
 
     (Opcao = "1" -> listarCarrosPorCategoria(Connection), menuCliente;
      Opcao = "2" -> realizarAluguel(Connection),          menuCliente;
-     Opcao = "3" -> cancelarAluguel, menuCliente;
+     Opcao = "3" -> cancelarAluguel(Connection), menuCliente;
      Opcao = "4" -> rankingCarrosMaisAlugados, menuCliente;
      Opcao = "0" -> writeln('Saindo...\n'), halt;
         writeln('Opção inválida. Por favor, escolha novamente.'), menuCliente).
