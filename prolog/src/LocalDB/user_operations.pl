@@ -166,6 +166,11 @@ getAllCars(Connection, Carros) :-
         "SELECT id_carro, marca, modelo, ano, placa FROM carros ORDER BY id_carro", 
         Carros).
 
+getCarrosDisponiveis(Connection, Carros) :-
+    db_query(Connection,
+        "SELECT id_carro, marca, modelo, ano, placa, diaria_carro FROM carros WHERE status = 'D' ORDER BY id_carro", 
+        Carros).
+
 getAllClientes(Connection, Clientes) :-
     db_query(Connection,
         "SELECT id_usuario, nome, sobrenome, email FROM usuarios WHERE tipo = 'cliente'", 
