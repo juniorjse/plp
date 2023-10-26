@@ -228,7 +228,6 @@ realizarAluguel(Connection) :-
 
     authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado),
     
-    % Verifique se o status do carro é 'D' antes de permitir o aluguel
     (Status = 'D' ->
         writeln('Digite a quantidade de dias que deseja alugar:'),
         read_line_to_string(user_input, DiasAluguelStr),
