@@ -170,3 +170,18 @@ getAllClientes(Connection, Clientes) :-
     db_query(Connection,
         "SELECT id_usuario, nome, sobrenome, email FROM usuarios WHERE tipo = 'cliente'", 
         Clientes).
+
+getAlugueisAtivos(Connection, Alugueis) :-
+    db_query(Connection,
+        "SELECT 
+            A.id_aluguel, 
+            C.marca, 
+            C.modelo, 
+            U.nome, 
+            U.sobrenome
+        FROM Alugueis A
+        JOIN Carros C ON A.id_carro = C.id_carro
+        JOIN Usuarios U ON A.id_usuario = U.id_usuario
+        WHERE A.status_aluguel = 'ativo';
+        ", 
+        Alugueis).
