@@ -163,3 +163,6 @@ carroExiste(Connection, CarroID) :-
 getCarroStatus(Connection, CarroID, Status) :-
     Q = "SELECT status FROM carros WHERE id_carro = %w",
     db_parameterized_query(Connection, Q, [CarroID], [row(Status)]).
+
+getAllCars(Connection, Carros) :-
+    db_query(Connection, "SELECT id_carro, marca, modelo, ano, placa FROM carros", Carros).

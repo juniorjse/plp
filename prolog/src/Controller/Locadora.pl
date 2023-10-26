@@ -33,7 +33,6 @@ menuLocadora :-
      Opcao = "0" -> writeln('Saindo...'), writeln(''), halt;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
 
-
 %CADASTRAR_CARRO
 cadastrarCarro :-
     connectiondb:iniciandoDatabase(Connection),
@@ -109,7 +108,8 @@ registrarDevolucao :-
             writeln('|1. Problema no carro'),
             writeln('|2. Outro motivo'),
             read_line_to_string(user_input, Motivo),
-            (Motivo = "1" -> enviaParaMecanico(IDCarro), menuLocadora;
+            (Motivo = "1" -> enviaParaMecanico(IDCarro),
+                             writeln('Carro enviado para conserto!'), menuLocadora;
              Motivo = "2" -> calculaValor( DataInicio, DataDevolucao, IDCarro, Valor), 
              printDevolucao(Valor, IDCarro), menuLocadora;
              writeln('Opção inválida. Você será direcionado(a) ao menu inicial.'), menuLocadora);
@@ -190,7 +190,7 @@ processarPagamento(_, _) :-
 
 enviaParaMecanico(IDCarro) :-
     connectiondb:iniciandoDatabase(Connection),
-    db_parameterized_query_no_return(Connection,  "UPDATE Carros SET status = 'R' WHERE id_carro = '%w'", [ID_Carro]),
+    db_parameterized_query_no_return(Connection,  "UPDATE Carros SET status = 'R' WHERE id_carro = %w", [IDCarro]),
     connectiondb:encerrandoDatabase(Connection).
 
 
@@ -237,7 +237,7 @@ listarAlugueisPorCategoria(Connection, Alugueis) :-
 mostraCarrosDefeituosos([]).  
 mostraCarrosDefeituosos([row( Marca,Modelo) | Outros]) :-
     format('|Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+~n',[Marca, Modelo]),
-    mostraCarros(Outros).
+    mostraCarrosDefeituosos(Outros).
     
 mostraAlugueisPorCategoria([]).
 mostraAlugueisPorCategoria([row(Categoria, Qtd)|Outros]) :-
@@ -260,7 +260,6 @@ exibirTotalDeCarros(Connection) :-
     menuDashboard.
 
 exibirCarrosMaisDefeituosos(Connection) :-
-writeln('entra aqui'),
     listarCarrosMaisDefeituosos(Connection, Carros),
     writeln('| Carros mais defeituosos:'),
     mostraCarrosDefeituosos(Carros),
@@ -332,6 +331,7 @@ listarAlugueisPorPessoa :-
     ;
         writeln('ID de cliente inválido. Tente novamente.')
     ).
+
 removerCarro :-
     writeln('Digite o ID do carro que deseja remover:'),
     util:get_input('', CarroIDStr),
