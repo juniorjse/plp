@@ -17,8 +17,8 @@ VALUES
     (15, 'Ferrari', '488 GTB', 2018, 'BCD2345', 'Esportivo', 10000, 'D', 1000.0, 'Um supercarro com potência incomparável.'),
     (16, 'Honda', 'Fit', 2022, 'QRS6789', 'Minivan', 8000, 'D', 120.0, 'Minivan compacta com versatilidade.');
 
-INSERT INTO Usuarios (nome, sobrenome, email, senha, tipo) VALUES ('Mecanico', 'Teste', 'mecanico@gmail.com', '123456789', 'mecanico');
-INSERT INTO Usuarios (nome, sobrenome, email, senha, tipo) VALUES ('Administrador', 'Teste', 'admin@gmail.com', '123456789', 'administrador');
+INSERT INTO Usuarios (nome, sobrenome, email, senha, tipo) VALUES ('Mecanico', ' ', 'mecanico@gmail.com', '123456789', 'mecanico');
+INSERT INTO Usuarios (nome, sobrenome, email, senha, tipo) VALUES ('Administrador', ' ', 'admin@gmail.com', '123456789', 'administrador');
 
 INSERT INTO Usuarios (nome, sobrenome, email, senha)
 VALUES 
@@ -30,9 +30,9 @@ VALUES
 
 INSERT INTO Alugueis (id_carro, id_usuario, data_inicio, data_devolucao, valor_total, status_aluguel)
 VALUES 
-    (2, 1, '2023-07-05', '2023-07-10', 500.00, 'ativo'),
+    (2, 4, '2023-07-05', '2023-07-10', 500.00, 'ativo'),
     (4, 3, '2023-07-03', '2023-07-08', 400.00, 'ativo'),
-    (1, 2, '2023-07-06', '2023-07-09', 300.00, 'concluído'),
+    (1, 7, '2023-07-06', '2023-07-09', 300.00, 'concluído'),
     (3, 5, '2023-07-04', '2023-07-07', 350.00, 'ativo'),
     (5, 4, '2023-07-07', '2023-07-11', 600.00, 'ativo'),
     (6, 6, '2023-09-20', '2023-09-30', 500.00, 'ativo'),
@@ -42,7 +42,7 @@ VALUES
     (3, 7, '2023-09-01', '2023-09-05', 1000.00, 'concluído'),
     (5, 6, '2023-08-01', '2023-08-15', 1275.00, 'concluído'),
     (1, 5, '2023-09-01', '2023-09-05', 500.00, 'concluído'),
-    (9, 2, '2023-09-20', '2023-09-30', 1500.00, 'ativo');
+    (9, 7, '2023-09-20', '2023-09-30', 1500.00, 'ativo');
 
 INSERT INTO Locadora (nome, endereco, contato)
 VALUES 
