@@ -1,7 +1,7 @@
 :- module(locadora, [menuLocadora/0, opcaoMenu/1, cadastrarCarro/0, confirmaCadastro/1, registrarDevolucao/0, printAluguel/4, menuDashboard/0, menuOpcao/1, calcularReceitaTotal/2, 
 contarAlugueis/2, contarCarros/2, listarCarrosMaisDefeituosos/2, listarAlugueisPorCategoria/2, exibirReceitaTotal/1,
 exibirNumeroDeAlugueis/1, exibirTotalDeCarros/1, 
-exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1, removerCarro/0]).
+exibirCarrosMaisDefeituosos/1, exibirAlugueisPorCategoria/1, removerCarro/0,listarTodosCarros/0]).
 :- use_module(library(odbc)).
 :- use_module(library(readutil)).
 :- use_module(library(date_time)).
@@ -32,6 +32,43 @@ menuLocadora :-
      Opcao = "5" -> menuDashboard, menuLocadora;
      Opcao = "0" -> writeln('Saindo...'), writeln(''), halt;
      writeln('Opção inválida. Por favor, escolha novamente.'), menuLocadora).
+
+%LISTAS
+mostraCarros([]).  
+mostraCarros([row(Id, Marca, Modelo, Ano, Placa) | Outros]) :-
+    format('|Id:~t ~w ~t~8+ Marca:~t ~w ~t~22+ Modelo:~t ~w ~t~21+ Ano:  ~w   Placa:  ~w|~n',[ Id, Marca, Modelo, Ano, Placa]),
+    mostraCarros(Outros).
+
+listarTodosCarros :-
+    writeln("|-------------------------------------------------------------------------------|"),
+    writeln("|                                    CARROS                                     |"),
+    writeln("|-------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+
+    user_operations:getAllCars(Connection, Carros),
+    mostraCarros(Carros),
+    writeln(''),
+
+    connectiondb:encerrandoDatabase(Connection).
+
+
+mostrarUsuarios([]).  
+mostrarUsuarios([row(ID_Usuario, Nome, Sobrenome, Email) | Outros]) :-
+    format('|Id:~t ~w ~t~8+ Nome:~t ~w ~t~15+ Sobrenome:~t ~w ~t~25+ Email:~t  ~w~t~39+|~n',[ID_Usuario, Nome, Sobrenome, Email]),
+    mostrarUsuarios(Outros).
+
+listarTodosUsuarios :-
+    writeln("|--------------------------------------------------------------------------------------|"),
+    writeln("|                                       USUARIOS                                       |"),
+    writeln("|--------------------------------------------------------------------------------------|"),
+    connectiondb:iniciandoDatabase(Connection),
+
+    user_operations:getAllClientes(Connection, Clientes),
+    mostrarUsuarios(Clientes),
+    writeln(''),
+
+    connectiondb:encerrandoDatabase(Connection).
+
 
 %CADASTRAR_CARRO
 cadastrarCarro :-
@@ -83,6 +120,7 @@ confirmaCadastro(Confirm) :-
 
 %REGISTRAR_DEVOLUCAO
 registrarDevolucao :-
+    listarTodosCarros,
     writeln('Digite o número do contrato/Id do aluguel a ser encerrado:'),
     read_line_to_string(user_input, InputString),
     writeln(''),
@@ -274,6 +312,8 @@ exibirAlugueisPorCategoria(Connection) :-
 
 %REGISTRO_ALUGUEL_PESSOA
 listarAlugueisPorPessoa :-
+
+    listarTodosUsuarios,
     writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
     util:get_input('', ClienteIDStr),
     writeln(''),
@@ -309,6 +349,7 @@ mostrarRegistroDeAluguel(Connection, row(IDCarro, Marca, Ano, Modelo, DataInicio
     format('|Valor:  R$ ~w~n', [Valor]),
     format('|Status:   ~w~n', [Status]),
     writeln('').
+
 listarAlugueisPorPessoa :-
     writeln('Digite o ID do cliente para listar os registros de aluguéis:'),
     util:get_input('', ClienteIDStr),
@@ -333,6 +374,7 @@ listarAlugueisPorPessoa :-
     ).
 
 removerCarro :-
+    listarTodosCarros,
     writeln('Digite o ID do carro que deseja remover:'),
     util:get_input('', CarroIDStr),
 
