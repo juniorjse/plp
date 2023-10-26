@@ -227,12 +227,10 @@ realizarAluguel(Connection) :-
     atom_number(CarroIDStr, CarroID),
 
     authenticateCar(Connection, CarroID, Status, DiariaCarro, Autenticado),
-
-    % Verifique se o status do carro é 'D' antes de permitir o aluguel
     (Status = 'D' ->
         writeln('Digite a quantidade de dias que deseja alugar:'),
         read_line_to_string(user_input, DiasAluguelStr),
-        atom_number(DiasAluguelStr, DiasAluguel), % Converter os dias para número
+        atom_number(DiasAluguelStr, DiasAluguel),
 
         ( Autenticado =:= 1 ->
             ValorTotal is DiariaCarro * DiasAluguel,
